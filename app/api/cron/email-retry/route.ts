@@ -7,7 +7,15 @@ import { successResponse, errorResponse } from '@/lib/api-response'
 // Retries failed email notifications with exponential backoff
 export async function GET(request: NextRequest) {
   const secret = request.headers.get('x-cron-secret')
-  if (secret !== process.env.CRON_SECRET) {
+  const authHeader = request.headers.get('authorization')
+  const isVercelCron = request.headers.get('x-vercel-cron') === '1'
+
+  const isValid =
+    isVercelCron ||
+    secret === process.env.CRON_SECRET ||
+    authHeader === `Bearer ${process.env.CRON_SECRET}`
+
+  if (!isValid) {
     return errorResponse('Unauthorized', 401)
   }
 
