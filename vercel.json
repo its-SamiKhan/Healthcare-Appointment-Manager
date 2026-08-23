@@ -2,15 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/cleanup-holds",
-      "schedule": "* * * * *"
-    },
-    {
-      "path": "/api/cron/email-retry",
-      "schedule": "*/5 * * * *"
-    },
-    {
-      "path": "/api/cron/medication-reminders",
-      "schedule": "* * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }
