@@ -2,22 +2,83 @@ import 'dotenv/config'
 import { prisma } from '../lib/prisma'
 import { hashPassword } from '../lib/auth'
 
+// ─── Indian Seed Datasets ───────────────────────────────────────────────────
+
+const FIRST_NAMES_MALE = [
+  'Rajesh', 'Vikram', 'Amit', 'Suresh', 'Arjun', 'Rohit', 'Rahul', 'Vikas',
+  'Deepak', 'Sanjay', 'Alok', 'Nitin', 'Sunil', 'Karan', 'Manish', 'Anil',
+  'Praveen', 'Gaurav', 'Rishi', 'Abhishek', 'Vivek', 'Siddharth', 'Varun',
+  'Tushar', 'Aditya', 'Rohan', 'Kunal', 'Ashish', 'Devendra', 'Sachin',
+]
+
+const FIRST_NAMES_FEMALE = [
+  'Ananya', 'Priya', 'Elena', 'Neha', 'Kavita', 'Sneha', 'Anjali', 'Pooja',
+  'Sunita', 'Swati', 'Meera', 'Ritu', 'Divya', 'Shweta', 'Nisha', 'Preeti',
+  'Simran', 'Tanvi', 'Richa', 'Shruti', 'Archana', 'Aakanksha', 'Bhavna',
+  'Deepika', 'Krutika', 'Pallavi', 'Rashmi', 'Sangeeta', 'Vidya', 'Yashasvi',
+]
+
+const LAST_NAMES = [
+  'Sharma', 'Verma', 'Patel', 'Mehta', 'Rao', 'Malhotra', 'Agarwal', 'Kumar',
+  'Iyer', 'Reddy', 'Deshmukh', 'Joshi', 'Gupta', 'Singh', 'Chowdhury', 'Shah',
+  'Nair', 'Bhat', 'Kulkarni', 'Jain', 'Saxena', 'Kapoor', 'Trivedi', 'Pandey',
+  'Mishra', 'Sen', 'Banerjee', 'Rathore', 'Shetty', 'Venkatesh',
+]
+
+const SPECIALIZATIONS = [
+  { name: 'General Physician', degree: 'MBBS, MD - General Medicine', fee: 500 },
+  { name: 'Cardiology', degree: 'MBBS, MD, DM - Cardiology', fee: 800 },
+  { name: 'Dermatology', degree: 'MBBS, MD - Dermatology', fee: 600 },
+  { name: 'Orthopedics', degree: 'MBBS, MS - Orthopedics', fee: 700 },
+  { name: 'Pediatrics', degree: 'MBBS, MD - Pediatrics', fee: 500 },
+  { name: 'Neurology', degree: 'MBBS, DM - Neurology', fee: 900 },
+  { name: 'ENT', degree: 'MBBS, MS - ENT', fee: 550 },
+  { name: 'Gynecology', degree: 'MBBS, MS - Obstetrics & Gynecology', fee: 650 },
+  { name: 'Psychiatry', degree: 'MBBS, MD - Psychiatry', fee: 800 },
+  { name: 'Oncology', degree: 'MBBS, DM - Medical Oncology', fee: 1000 },
+  { name: 'Gastroenterology', degree: 'MBBS, DM - Gastroenterology', fee: 850 },
+  { name: 'Ophthalmology', degree: 'MBBS, MS - Ophthalmology', fee: 500 },
+  { name: 'Endocrinology', degree: 'MBBS, DM - Endocrinology', fee: 750 },
+  { name: 'Pulmonology', degree: 'MBBS, DTCD, MD - Pulmonology', fee: 650 },
+  { name: 'Nephrology', degree: 'MBBS, DM - Nephrology', fee: 900 },
+]
+
+const LANGUAGES_COMBOS = [
+  'English, Hindi',
+  'English, Hindi, Marathi',
+  'English, Hindi, Gujarati',
+  'English, Tamil, Telugu',
+  'English, Hindi, Punjabi',
+  'English, Bengali, Hindi',
+  'English, Kannada, Hindi',
+]
+
 const DEFAULT_WORKING_HOURS = {
   monday: { start: '09:00', end: '17:00', available: true },
   tuesday: { start: '09:00', end: '17:00', available: true },
   wednesday: { start: '09:00', end: '17:00', available: true },
   thursday: { start: '09:00', end: '17:00', available: true },
   friday: { start: '09:00', end: '17:00', available: true },
-  saturday: { start: '09:00', end: '13:00', available: false },
+  saturday: { start: '09:00', end: '13:00', available: true },
   sunday: { start: '09:00', end: '13:00', available: false },
 }
 
+const COMMON_SYMPTOMS = [
+  { chief: 'Persistent high fever (102°F), severe headache, and joint pains', duration: '3 days', severity: 7, urgency: 'HIGH', dx: 'Dengue Fever / Viral Febrile Illness', rx: [{ drugName: 'Paracetamol', dosage: '650mg', frequency: '3x daily after meals', durationDays: 5 }] },
+  { chief: 'Acidity, chest burning sensation after meals, and nausea', duration: '2 weeks', severity: 5, urgency: 'MEDIUM', dx: 'Gastroesophageal Reflux Disease (GERD)', rx: [{ drugName: 'Pantoprazole', dosage: '40mg', frequency: '1x daily before breakfast', durationDays: 14 }] },
+  { chief: 'Throbbing right-sided headache with sensitivity to light and sound', duration: '1 day', severity: 8, urgency: 'HIGH', dx: 'Acute Migraine Episode', rx: [{ drugName: 'Naproxen', dosage: '500mg', frequency: '2x daily as needed', durationDays: 3 }] },
+  { chief: 'Dry itchy skin patches on elbow and knees with redness', duration: '1 month', severity: 4, urgency: 'LOW', dx: 'Atopic Dermatitis (Eczema)', rx: [{ drugName: 'Desonide Cream 0.05%', dosage: 'Apply thin layer', frequency: '2x daily', durationDays: 10 }] },
+  { chief: 'Frequent urination, excessive thirst, and feeling tired', duration: '3 weeks', severity: 6, urgency: 'MEDIUM', dx: 'Type 2 Diabetes Mellitus (Initial Evaluation)', rx: [{ drugName: 'Metformin', dosage: '500mg', frequency: '2x daily with meals', durationDays: 30 }] },
+  { chief: 'Right knee joint pain during stairs climbing and walking', duration: '2 months', severity: 5, urgency: 'LOW', dx: 'Osteoarthritis Right Knee (Grade I)', rx: [{ drugName: 'Glucosamine Sulfate', dosage: '1500mg', frequency: '1x daily', durationDays: 30 }] },
+  { chief: 'Nasal congestion, continuous sneezing, and watery eyes', duration: '5 days', severity: 3, urgency: 'LOW', dx: 'Acute Allergic Rhinitis', rx: [{ drugName: 'Levocetirizine', dosage: '5mg', frequency: '1x daily at bedtime', durationDays: 7 }] },
+]
+
 async function seed() {
-  console.log('🌱 Starting comprehensive database seeding...')
+  console.log('🚀 Starting Large Indian Healthcare Database Seeding (120+ Doctors, 50+ Patients)...')
 
   const passwordHash = await hashPassword('Password123!')
 
-  // 1. Create Admin User
+  // 1. Admin Account
   const adminUser = await prisma.user.upsert({
     where: { email: 'admin@healthcare.com' },
     update: {},
@@ -28,17 +89,15 @@ async function seed() {
       role: 'ADMIN',
     },
   })
-  console.log('✅ Created Admin:', adminUser.email)
+  console.log('✅ Admin Account Verified:', adminUser.email)
 
-  // 2. Create Doctors (8 doctors across specializations)
-  const doctorsData = [
+  // 2. Curated Mockup Doctors (Dr. Ananya Sharma & Dr. Rohit Verma)
+  const mockupDoctors = [
     {
       name: 'Dr. Ananya Sharma',
       email: 'ananya.sharma@healthcare.com',
       specialization: 'General Physician',
       bio: 'Dr. Ananya Sharma is a dedicated General Physician with over 8 years of experience in providing compassionate and comprehensive healthcare.',
-      phone: '+1-555-0111',
-      slotDuration: 30,
       experienceYears: 8,
       fee: 500,
       rating: 4.8,
@@ -50,8 +109,6 @@ async function seed() {
       email: 'rohit.verma@healthcare.com',
       specialization: 'General Physician',
       bio: 'Senior physician with 10+ years of experience in internal medicine, preventative health screenings, and fever care.',
-      phone: '+1-555-0122',
-      slotDuration: 30,
       experienceYears: 10,
       fee: 500,
       rating: 4.6,
@@ -59,103 +116,40 @@ async function seed() {
       languages: 'English, Hindi',
     },
     {
-      name: 'Dr. Sarah Jenkins',
-      email: 'sarah.jenkins@healthcare.com',
-      specialization: 'Cardiology',
-      bio: 'Board-certified cardiologist with 12+ years of experience in preventative heart health and arrhythmia treatment.',
-      phone: '+1-555-0192',
-      slotDuration: 30,
-      experienceYears: 12,
-      fee: 700,
-      rating: 4.9,
-      totalReviews: 145,
-      languages: 'English',
-    },
-    {
-      name: 'Dr. Marcus Vance',
-      email: 'marcus.vance@healthcare.com',
-      specialization: 'Dermatology',
-      bio: 'Specialist in clinical dermatology, skin cancer screening, and acne management.',
-      phone: '+1-555-0144',
-      slotDuration: 30,
-      experienceYears: 7,
+      name: 'Dr. Priya Mehta',
+      email: 'priya.mehta@healthcare.com',
+      specialization: 'General Physician',
+      bio: 'Specialist in family health, preventive care, and adult immunization.',
+      experienceYears: 6,
       fee: 450,
       rating: 4.7,
       totalReviews: 76,
-      languages: 'English, Spanish',
-    },
-    {
-      name: 'Dr. Elena Rostova',
-      email: 'elena.rostova@healthcare.com',
-      specialization: 'General Physician',
-      bio: 'Primary care specialist focusing on holistic wellness, chronic disease management, and family medicine.',
-      phone: '+1-555-0177',
-      slotDuration: 20,
-    },
-    {
-      name: 'Dr. Rajesh Patel',
-      email: 'rajesh.patel@healthcare.com',
-      specialization: 'Orthopedics',
-      bio: 'Orthopedic surgeon specializing in sports injuries, joint replacements, and spine wellness.',
-      phone: '+1-555-0188',
-      slotDuration: 30,
-    },
-    {
-      name: 'Dr. Amanda Chen',
-      email: 'amanda.chen@healthcare.com',
-      specialization: 'Neurology',
-      bio: 'Expert neurologist specialized in migraine management, neuropathy, and brain health.',
-      phone: '+1-555-0155',
-      slotDuration: 45,
-    },
-    {
-      name: 'Dr. David Miller',
-      email: 'david.miller@healthcare.com',
-      specialization: 'Pediatrics',
-      bio: 'Compassionate pediatrician focusing on child growth, developmental milestones, and vaccinations.',
-      phone: '+1-555-0166',
-      slotDuration: 30,
-    },
-    {
-      name: 'Dr. Priya Sharma',
-      email: 'priya.sharma@healthcare.com',
-      specialization: 'Gynecology',
-      bio: 'Specialist in women’s health, prenatal care, and reproductive medicine.',
-      phone: '+1-555-0133',
-      slotDuration: 30,
-    },
-    {
-      name: 'Dr. James Wilson',
-      email: 'james.wilson@healthcare.com',
-      specialization: 'ENT',
-      bio: 'Ear, Nose & Throat surgeon specializing in sinus treatment, hearing care, and allergy therapy.',
-      phone: '+1-555-0122',
-      slotDuration: 20,
+      languages: 'English, Hindi, Gujarati',
     },
   ]
 
-  const createdDoctors: Array<{ id: string; name: string; specialization: string; userId: string }> = []
+  const createdDoctorRecords: Array<{ id: string; name: string; specialization: string }> = []
 
-  for (const docData of doctorsData) {
+  for (const doc of mockupDoctors) {
     const user = await prisma.user.upsert({
-      where: { email: docData.email },
+      where: { email: doc.email },
       update: {},
       create: {
-        name: docData.name,
-        email: docData.email,
+        name: doc.name,
+        email: doc.email,
         passwordHash,
         role: 'DOCTOR',
         doctor: {
           create: {
-            specialization: docData.specialization,
-            bio: docData.bio,
-            phone: docData.phone,
-            slotDuration: docData.slotDuration,
-            experienceYears: docData.experienceYears || 8,
-            fee: docData.fee || 500,
-            rating: docData.rating || 4.8,
-            totalReviews: docData.totalReviews || 100,
-            languages: docData.languages || 'English, Hindi',
+            specialization: doc.specialization,
+            bio: doc.bio,
+            phone: `+91-98${Math.floor(10000000 + Math.random() * 90000000)}`,
+            slotDuration: 30,
+            experienceYears: doc.experienceYears,
+            fee: doc.fee,
+            rating: doc.rating,
+            totalReviews: doc.totalReviews,
+            languages: doc.languages,
             workingHours: DEFAULT_WORKING_HOURS,
           },
         },
@@ -163,320 +157,219 @@ async function seed() {
       include: { doctor: true },
     })
     if (user.doctor) {
-      createdDoctors.push({
-        id: user.doctor.id,
-        name: user.name,
-        specialization: user.doctor.specialization,
-        userId: user.id,
-      })
+      createdDoctorRecords.push({ id: user.doctor.id, name: user.name, specialization: user.doctor.specialization })
     }
   }
-  console.log(`✅ Created ${createdDoctors.length} Doctors`)
 
-  // 3. Create Patients (6 Patients)
-  const patientsData = [
-    { name: 'John Doe', email: 'patient@example.com', bloodGroup: 'O+', phone: '+1-555-0199' },
-    { name: 'Jane Smith', email: 'jane.smith@example.com', bloodGroup: 'A+', phone: '+1-555-0211' },
-    { name: 'Robert Taylor', email: 'robert.taylor@example.com', bloodGroup: 'B+', phone: '+1-555-0222' },
-    { name: 'Emily Watson', email: 'emily.watson@example.com', bloodGroup: 'AB+', phone: '+1-555-0233' },
-    { name: 'Michael Brown', email: 'michael.brown@example.com', bloodGroup: 'O-', phone: '+1-555-0244' },
-    { name: 'Sophia Martinez', email: 'sophia.martinez@example.com', bloodGroup: 'A-', phone: '+1-555-0255' },
-  ]
+  // 3. Generate 120+ Additional Indian Doctors across 15 Specializations
+  console.log('⏳ Generating 120+ Indian Doctor profiles...')
 
-  const createdPatients: Array<{ id: string; name: string; email: string; userId: string }> = []
+  for (let i = 1; i <= 120; i++) {
+    const isFemale = i % 2 === 0
+    const firstName = isFemale
+      ? FIRST_NAMES_FEMALE[i % FIRST_NAMES_FEMALE.length]
+      : FIRST_NAMES_MALE[i % FIRST_NAMES_MALE.length]
+    const lastName = LAST_NAMES[(i * 3) % LAST_NAMES.length]
+    const doctorName = `Dr. ${firstName} ${lastName}`
+    const email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@healthcare.com`
 
-  for (const patData of patientsData) {
+    const specObj = SPECIALIZATIONS[i % SPECIALIZATIONS.length]
+    const exp = 4 + (i % 22) // 4 to 25 years experience
+    const rating = Number((4.2 + (i % 8) * 0.1).toFixed(1))
+    const reviews = 35 + (i * 7) % 200
+    const languages = LANGUAGES_COMBOS[i % LANGUAGES_COMBOS.length]
+    const fee = specObj.fee + (i % 4) * 50
+
+    const bio = `${doctorName} is a highly respected ${specObj.name} with ${exp} years of clinical experience. Holds ${specObj.degree}. Specializes in patient-centered care and advanced diagnostic procedures.`
+
     const user = await prisma.user.upsert({
-      where: { email: patData.email },
+      where: { email },
       update: {},
       create: {
-        name: patData.name,
-        email: patData.email,
+        name: doctorName,
+        email,
+        passwordHash,
+        role: 'DOCTOR',
+        doctor: {
+          create: {
+            specialization: specObj.name,
+            bio,
+            phone: `+91-98${Math.floor(10000000 + Math.random() * 90000000)}`,
+            slotDuration: specObj.name === 'Neurology' ? 45 : 30,
+            experienceYears: exp,
+            fee,
+            rating,
+            totalReviews: reviews,
+            languages,
+            workingHours: DEFAULT_WORKING_HOURS,
+          },
+        },
+      },
+      include: { doctor: true },
+    })
+
+    if (user.doctor) {
+      createdDoctorRecords.push({ id: user.doctor.id, name: user.name, specialization: user.doctor.specialization })
+    }
+  }
+  console.log(`✅ Total Doctors Created: ${createdDoctorRecords.length}`)
+
+  // 4. Create 50+ Indian Patient Profiles
+  console.log('⏳ Generating 50+ Indian Patient profiles...')
+  const createdPatientRecords: Array<{ id: string; name: string; email: string }> = []
+
+  // Primary Test Patient (John Doe / Rahul Sharma)
+  const primaryPatientUser = await prisma.user.upsert({
+    where: { email: 'patient@example.com' },
+    update: {},
+    create: {
+      name: 'John Doe',
+      email: 'patient@example.com',
+      passwordHash,
+      role: 'PATIENT',
+      patient: {
+        create: {
+          bloodGroup: 'O+',
+          phone: '+91-9876543210',
+        },
+      },
+    },
+    include: { patient: true },
+  })
+  if (primaryPatientUser.patient) {
+    createdPatientRecords.push({ id: primaryPatientUser.patient.id, name: primaryPatientUser.name, email: primaryPatientUser.email })
+  }
+
+  for (let i = 1; i <= 50; i++) {
+    const isFemale = i % 2 === 0
+    const firstName = isFemale
+      ? FIRST_NAMES_FEMALE[(i + 5) % FIRST_NAMES_FEMALE.length]
+      : FIRST_NAMES_MALE[(i + 5) % FIRST_NAMES_MALE.length]
+    const lastName = LAST_NAMES[(i * 2) % LAST_NAMES.length]
+    const patientName = `${firstName} ${lastName}`
+    const email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@example.com`
+    const bloodGroups = ['A+', 'B+', 'O+', 'AB+', 'A-', 'B-', 'O-']
+
+    const user = await prisma.user.upsert({
+      where: { email },
+      update: {},
+      create: {
+        name: patientName,
+        email,
         passwordHash,
         role: 'PATIENT',
         patient: {
           create: {
-            bloodGroup: patData.bloodGroup,
-            phone: patData.phone,
+            bloodGroup: bloodGroups[i % bloodGroups.length],
+            phone: `+91-97${Math.floor(10000000 + Math.random() * 90000000)}`,
           },
         },
       },
       include: { patient: true },
     })
+
     if (user.patient) {
-      createdPatients.push({
-        id: user.patient.id,
-        name: user.name,
-        email: user.email,
-        userId: user.id,
-      })
+      createdPatientRecords.push({ id: user.patient.id, name: user.name, email: user.email })
     }
   }
-  console.log(`✅ Created ${createdPatients.length} Patients`)
+  console.log(`✅ Total Patients Created: ${createdPatientRecords.length}`)
 
-  // 4. Create Doctor Leave Records
-  const doctor1 = createdDoctors[0] // Dr. Sarah Jenkins
-  if (doctor1) {
-    const leaveStartDate = new Date()
-    leaveStartDate.setDate(leaveStartDate.getDate() + 10)
-    const leaveEndDate = new Date(leaveStartDate)
-    leaveEndDate.setDate(leaveEndDate.getDate() + 3)
+  // 5. Generate 150+ Appointments (Past, Today, Future) with Symptoms, AI Summaries, Visit Notes, Rx & Reminders
+  console.log('⏳ Generating 150+ Appointments & Medical Records...')
 
-    await prisma.doctorLeave.create({
+  let appointmentCount = 0
+
+  const timeSlots = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '14:00', '14:30', '15:00', '15:30', '16:00']
+
+  // Seed appointments across last 30 days and next 15 days
+  for (let i = 0; i < 150; i++) {
+    const doctor = createdDoctorRecords[i % createdDoctorRecords.length]
+    const patient = createdPatientRecords[i % createdPatientRecords.length]
+    const slotTime = timeSlots[i % timeSlots.length]
+
+    // Determine Date: past (-30 to -1 days), today (0), or future (+1 to +15 days)
+    const dayOffset = (i % 45) - 30
+    const dateObj = new Date()
+    dateObj.setDate(dateObj.getDate() + dayOffset)
+    dateObj.setHours(0, 0, 0, 0)
+
+    const isPast = dayOffset < 0
+    const isToday = dayOffset === 0
+    const isFuture = dayOffset > 0
+
+    const status = isPast
+      ? 'COMPLETED'
+      : isToday
+      ? i % 2 === 0
+        ? 'CONFIRMED'
+        : 'COMPLETED'
+      : 'CONFIRMED'
+
+    const endMinutes =
+      parseInt(slotTime.split(':')[0]) * 60 +
+      parseInt(slotTime.split(':')[1]) +
+      30
+    const endTime = `${Math.floor(endMinutes / 60)
+      .toString()
+      .padStart(2, '0')}:${(endMinutes % 60).toString().padStart(2, '0')}`
+
+    const appointment = await prisma.appointment.create({
       data: {
-        doctorId: doctor1.id,
-        startDate: leaveStartDate,
-        endDate: leaveEndDate,
-        reason: 'Attending Cardiology Conference in Chicago',
+        doctorId: doctor.id,
+        patientId: patient.id,
+        date: dateObj,
+        startTime: slotTime,
+        endTime: endTime,
+        status: status as 'CONFIRMED' | 'COMPLETED',
+        notes: `Patient consultation scheduled for ${doctor.specialization}.`,
       },
     })
-    console.log('✅ Created Doctor Leave record')
-  }
+    appointmentCount++
 
-  // 5. Create Today's, Past, and Future Appointments with Symptoms, AI Summaries, Visit Notes & Prescriptions
-  const todayStr = new Date().toISOString().split('T')[0]
-  const todayDate = new Date(`${todayStr}T00:00:00.000Z`)
+    const symptomTemplate = COMMON_SYMPTOMS[i % COMMON_SYMPTOMS.length]
 
-  const pastDate1 = new Date()
-  pastDate1.setDate(pastDate1.getDate() - 5)
-
-  const pastDate2 = new Date()
-  pastDate2.setDate(pastDate2.getDate() - 12)
-
-  const futureDate1 = new Date()
-  futureDate1.setDate(futureDate1.getDate() + 2)
-
-  const futureDate2 = new Date()
-  futureDate2.setDate(futureDate2.getDate() + 5)
-
-  // Appointments configuration
-  const appointmentsToSeed = [
-    // Today's urgent appointment (Cardiology)
-    {
-      doctorId: createdDoctors[0].id,
-      patientId: createdPatients[0].id,
-      date: todayDate,
-      startTime: '09:30',
-      endTime: '10:00',
-      status: 'CONFIRMED' as const,
-      notes: 'Patient reported sudden chest tightness after light exercise.',
-      symptoms: {
-        chiefComplaint: 'Chest tightness, mild shortness of breath, and palpitations',
-        duration: '2 hours',
-        severity: 8,
-        previousConditions: 'Hypertension',
-        currentMedicines: 'Amlodipine 5mg',
-        summary: {
-          urgency: 'HIGH',
-          chiefComplaint: 'Acute chest tightness with palpitations',
-          doctorQuestions: [
-            'Does the tightness radiate to your left arm or jaw?',
-            'Did you experience dizziness or nausea?',
-            'When did you last take your blood pressure medication?',
-          ],
-        },
-      },
-    },
-    // Today's medium urgency appointment (General Physician)
-    {
-      doctorId: createdDoctors[2].id,
-      patientId: createdPatients[1].id,
-      date: todayDate,
-      startTime: '10:00',
-      endTime: '10:20',
-      status: 'CONFIRMED' as const,
-      notes: 'Persistent fever and sore throat.',
-      symptoms: {
-        chiefComplaint: 'High fever (101°F), sore throat, body aches for 3 days',
-        duration: '3 days',
-        severity: 6,
-        previousConditions: 'None',
-        currentMedicines: 'Paracetamol 500mg as needed',
-        summary: {
-          urgency: 'MEDIUM',
-          chiefComplaint: 'Acute febrile illness with pharyngitis symptoms',
-          doctorQuestions: [
-            'Have you had difficulty swallowing fluids?',
-            'Are any lymph nodes tender in your neck?',
-          ],
-        },
-      },
-    },
-    // Today's low urgency appointment (Dermatology)
-    {
-      doctorId: createdDoctors[1].id,
-      patientId: createdPatients[2].id,
-      date: todayDate,
-      startTime: '11:00',
-      endTime: '11:30',
-      status: 'CONFIRMED' as const,
-      notes: 'Routine skin lesion check.',
-      symptoms: {
-        chiefComplaint: 'Dry itchy patch on left elbow and forearm',
-        duration: '2 weeks',
-        severity: 3,
-        previousConditions: 'Eczema history',
-        currentMedicines: 'Moisturizing cream',
-        summary: {
-          urgency: 'LOW',
-          chiefComplaint: 'Localized dry pruritic rash on left forearm',
-          doctorQuestions: [
-            'Have you started using any new soap or detergent?',
-            'Does the itching flare up at night?',
-          ],
-        },
-      },
-    },
-    // Today's completed appointment (Orthopedics)
-    {
-      doctorId: createdDoctors[3].id,
-      patientId: createdPatients[3].id,
-      date: todayDate,
-      startTime: '09:00',
-      endTime: '09:30',
-      status: 'COMPLETED' as const,
-      notes: 'Right knee pain during running.',
-      visitNote: {
-        clinicalNotes: 'Physical exam shows mild lateral knee tenderness. Range of motion intact. No ligamentous instability.',
-        diagnosis: 'Patellofemoral Pain Syndrome (Runner’s Knee)',
-        followUpDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-        patientSummary: 'You have mild strain in your knee tendon from running. Rest, ice after workouts, and do quad strengthening exercises.',
-        prescriptions: [
-          { drugName: 'Ibuprofen', dosage: '400mg', frequency: '2x daily after meals', durationDays: 5 },
-          { drugName: 'Topical Pain Relief Gel', dosage: 'Apply thin layer', frequency: '3x daily', durationDays: 7 },
-        ],
-      },
-    },
-    // Past completed appointment 1 (Cardiology)
-    {
-      doctorId: createdDoctors[0].id,
-      patientId: createdPatients[0].id,
-      date: pastDate1,
-      startTime: '14:00',
-      endTime: '14:30',
-      status: 'COMPLETED' as const,
-      notes: 'Routine annual cardiac review.',
-      visitNote: {
-        clinicalNotes: 'BP 125/82. ECG demonstrates normal sinus rhythm. Cholesterol levels mild elevation.',
-        diagnosis: 'Mild Essential Hypertension - Well Controlled',
-        followUpDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
-        patientSummary: 'Your heart review looks great! Keep up with your low-salt diet and morning walks.',
-        prescriptions: [
-          { drugName: 'Atorvastatin', dosage: '10mg', frequency: '1x daily at night', durationDays: 30 },
-        ],
-      },
-    },
-    // Past completed appointment 2 (General Physician)
-    {
-      doctorId: createdDoctors[2].id,
-      patientId: createdPatients[4].id,
-      date: pastDate2,
-      startTime: '11:00',
-      endTime: '11:20',
-      status: 'COMPLETED' as const,
-      notes: 'Follow-up for seasonal allergies.',
-      visitNote: {
-        clinicalNotes: 'Nasal mucosa clear. Lung fields clear bilaterally.',
-        diagnosis: 'Allergic Rhinitis',
-        followUpDate: null,
-        patientSummary: 'Allergy symptoms resolved. Use antihistamines as needed during spring season.',
-        prescriptions: [
-          { drugName: 'Cetirizine', dosage: '10mg', frequency: '1x daily', durationDays: 10 },
-        ],
-      },
-    },
-    // Future appointment 1 (Neurology)
-    {
-      doctorId: createdDoctors[4].id,
-      patientId: createdPatients[5].id,
-      date: futureDate1,
-      startTime: '10:00',
-      endTime: '10:45',
-      status: 'CONFIRMED' as const,
-      notes: 'Frequent migraine consultation.',
-      symptoms: {
-        chiefComplaint: 'Throbbing headaches on right side, sensitive to light',
-        duration: '4 weeks',
-        severity: 7,
-        previousConditions: 'None',
-        currentMedicines: 'Over-the-counter pain relievers',
-        summary: {
-          urgency: 'MEDIUM',
-          chiefComplaint: 'Recurrent unilateral headache with photophobia',
-          doctorQuestions: [
-            'How many days per week do you experience these headaches?',
-            'Is there any aura or visual blurriness before onset?',
-          ],
-        },
-      },
-    },
-    // Future appointment 2 (Pediatrics)
-    {
-      doctorId: createdDoctors[5].id,
-      patientId: createdPatients[1].id,
-      date: futureDate2,
-      startTime: '15:30',
-      endTime: '16:00',
-      status: 'CONFIRMED' as const,
-      notes: 'Child wellness checkup.',
-    },
-  ]
-
-  for (const aptData of appointmentsToSeed) {
-    const apt = await prisma.appointment.create({
+    // Create Symptoms & AI Summaries for Today & Future & Past
+    const symptom = await prisma.symptom.create({
       data: {
-        doctorId: aptData.doctorId,
-        patientId: aptData.patientId,
-        date: aptData.date,
-        startTime: aptData.startTime,
-        endTime: aptData.endTime,
-        status: aptData.status,
-        notes: aptData.notes,
+        appointmentId: appointment.id,
+        chiefComplaint: symptomTemplate.chief,
+        duration: symptomTemplate.duration,
+        severity: symptomTemplate.severity,
+        previousConditions: 'None reported',
+        currentMedicines: 'None',
       },
     })
 
-    // Seed symptoms & AI summary if defined
-    if (aptData.symptoms) {
-      const sym = await prisma.symptom.create({
+    await prisma.symptomSummary.create({
+      data: {
+        symptomId: symptom.id,
+        urgency: symptomTemplate.urgency,
+        chiefComplaint: symptomTemplate.chief,
+        doctorQuestions: [
+          'How long have you experienced these exact symptoms?',
+          'Have you noticed any triggers or worsening factors?',
+          'Are you currently taking any OTC medications for relief?',
+        ],
+        status: 'COMPLETED',
+      },
+    })
+
+    // For Completed appointments, generate Visit Notes & Prescriptions & Reminders
+    if (status === 'COMPLETED') {
+      const visitNote = await prisma.visitNote.create({
         data: {
-          appointmentId: apt.id,
-          chiefComplaint: aptData.symptoms.chiefComplaint,
-          duration: aptData.symptoms.duration,
-          severity: aptData.symptoms.severity,
-          previousConditions: aptData.symptoms.previousConditions,
-          currentMedicines: aptData.symptoms.currentMedicines,
+          appointmentId: appointment.id,
+          clinicalNotes: `Patient examined. Vital signs stable. Diagnosed with ${symptomTemplate.dx}. Advised complete rest and hydration.`,
+          diagnosis: symptomTemplate.dx,
+          followUpDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+          patientSummary: `You have been diagnosed with ${symptomTemplate.dx}. Please follow the prescribed medication dosage and stay well hydrated.`,
         },
       })
 
-      if (aptData.symptoms.summary) {
-        await prisma.symptomSummary.create({
+      for (const rx of symptomTemplate.rx) {
+        const prescription = await prisma.prescription.create({
           data: {
-            symptomId: sym.id,
-            urgency: aptData.symptoms.summary.urgency,
-            chiefComplaint: aptData.symptoms.summary.chiefComplaint,
-            doctorQuestions: aptData.symptoms.summary.doctorQuestions,
-            status: 'COMPLETED',
-          },
-        })
-      }
-    }
-
-    // Seed visit note & prescriptions if defined
-    if (aptData.visitNote) {
-      const vn = await prisma.visitNote.create({
-        data: {
-          appointmentId: apt.id,
-          clinicalNotes: aptData.visitNote.clinicalNotes,
-          diagnosis: aptData.visitNote.diagnosis,
-          followUpDate: aptData.visitNote.followUpDate,
-          patientSummary: aptData.visitNote.patientSummary,
-        },
-      })
-
-      for (const rx of aptData.visitNote.prescriptions) {
-        const pres = await prisma.prescription.create({
-          data: {
-            visitNoteId: vn.id,
+            visitNoteId: visitNote.id,
             drugName: rx.drugName,
             dosage: rx.dosage,
             frequency: rx.frequency,
@@ -484,17 +377,16 @@ async function seed() {
           },
         })
 
-        // Generate sample medication reminders
-        const now = new Date()
+        // Medication Reminders
         for (let d = 0; d < 3; d++) {
-          const remTime = new Date(now)
+          const remTime = new Date()
           remTime.setDate(remTime.getDate() + d)
           remTime.setHours(9, 0, 0, 0)
 
           await prisma.medicationReminder.create({
             data: {
-              prescriptionId: pres.id,
-              patientId: aptData.patientId,
+              prescriptionId: prescription.id,
+              patientId: patient.id,
               scheduledAt: remTime,
               status: d === 0 ? 'SENT' : 'PENDING',
               sentAt: d === 0 ? new Date() : null,
@@ -503,39 +395,25 @@ async function seed() {
         }
       }
     }
-
-    // Seed notification log for each appointment
-    const patUser = createdPatients.find((p) => p.id === aptData.patientId)
-    if (patUser) {
-      await prisma.notificationLog.create({
-        data: {
-          recipient: patUser.email,
-          type: 'BOOKING_CONFIRMATION',
-          status: 'SENT',
-          attempts: 1,
-          payload: { appointmentId: apt.id, date: apt.date, startTime: apt.startTime },
-        },
-      })
-    }
   }
-  console.log('✅ Created Appointments, Symptoms, AI Summaries, Visit Notes & Prescriptions')
 
-  // 6. Seed Audit Logs
+  console.log(`✅ Total Appointments Created: ${appointmentCount}`)
+
+  // 6. Audit Logs
   await prisma.auditLog.createMany({
     data: [
-      { action: 'CREATE_DOCTOR', entityType: 'Doctor', entityId: createdDoctors[0].id, metadata: { name: createdDoctors[0].name } },
-      { action: 'BOOK_APPOINTMENT', entityType: 'Appointment', entityId: 'seed-apt-1', metadata: { doctorId: createdDoctors[0].id } },
-      { action: 'CREATE_DOCTOR_LEAVE', entityType: 'DoctorLeave', entityId: 'seed-leave-1', metadata: { doctorId: createdDoctors[0].id, reason: 'Conference' } },
+      { action: 'SEED_DATABASE', entityType: 'System', entityId: 'seed-01', metadata: { totalDoctors: 123, totalPatients: 51 } },
+      { action: 'CREATE_DOCTOR', entityType: 'Doctor', entityId: createdDoctorRecords[0].id, metadata: { name: createdDoctorRecords[0].name } },
+      { action: 'BOOK_APPOINTMENT', entityType: 'Appointment', entityId: 'seed-apt-100', metadata: { status: 'CONFIRMED' } },
     ],
   })
-  console.log('✅ Created Audit Logs')
 
-  console.log('\n🎉 Comprehensive database seeding complete!')
+  console.log('\n🎉 Massive Indian Healthcare Database Seeding Complete!')
 }
 
 seed()
   .catch((e) => {
-    console.error('❌ Seeding error:', e)
+    console.error('❌ Seeding failed:', e)
     process.exit(1)
   })
   .finally(async () => {
