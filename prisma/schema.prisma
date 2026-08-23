@@ -1,0 +1,233 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ──────────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  DOCTOR
+  PATIENT
+}
+
+enum AppointmentStatus {
+  HOLD
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  RESCHEDULED
+}
+
+enum SummaryStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum ReminderStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+enum NotificationType {
+  BOOKING_CONFIRMATION
+  APPOINTMENT_REMINDER
+  CANCELLATION
+  RESCHEDULE
+  LEAVE_NOTIFICATION
+  MEDICATION_REMINDER
+}
+
+// ─── Models ─────────────────────────────────────────────────────────────────
+
+model User {
+  id                 String   @id @default(cuid())
+  email              String   @unique
+  passwordHash       String
+  name               String
+  role               Role     @default(PATIENT)
+  googleAccessToken  String?
+  googleRefreshToken String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  doctor  Doctor?
+  patient Patient?
+}
+
+model Doctor {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  specialization String
+  workingHours   Json
+  slotDuration   Int      @default(30)
+  bio            String?
+  phone          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  leaves       DoctorLeave[]
+  appointments Appointment[]
+}
+
+model Patient {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dateOfBirth DateTime?
+  phone       String?
+  bloodGroup  String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  appointments Appointment[]
+}
+
+model DoctorLeave {
+  id        String   @id @default(cuid())
+  doctorId  String
+  doctor    Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  startDate DateTime
+  endDate   DateTime
+  reason    String?
+  createdAt DateTime @default(now())
+}
+
+model Appointment {
+  id        String            @id @default(cuid())
+  doctorId  String
+  doctor    Doctor            @relation(fields: [doctorId], references: [id])
+  patientId String
+  patient   Patient           @relation(fields: [patientId], references: [id])
+  date      DateTime
+  startTime String
+  endTime   String
+  status    AppointmentStatus @default(CONFIRMED)
+  notes     String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  symptoms      Symptom?
+  visitNote     VisitNote?
+  calendarEvent CalendarEvent?
+}
+
+model SlotHold {
+  id        String   @id @default(cuid())
+  doctorId  String
+  patientId String
+  date      DateTime
+  startTime String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Symptom {
+  id                 String      @id @default(cuid())
+  appointmentId      String      @unique
+  appointment        Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  chiefComplaint     String
+  duration           String
+  severity           Int
+  previousConditions String?
+  currentMedicines   String?
+  createdAt          DateTime    @default(now())
+
+  summary SymptomSummary?
+}
+
+model SymptomSummary {
+  id              String        @id @default(cuid())
+  symptomId       String        @unique
+  symptom         Symptom       @relation(fields: [symptomId], references: [id], onDelete: Cascade)
+  urgency         String
+  chiefComplaint  String
+  doctorQuestions Json
+  rawResponse     String?
+  status          SummaryStatus @default(PENDING)
+  createdAt       DateTime      @default(now())
+}
+
+model VisitNote {
+  id             String      @id @default(cuid())
+  appointmentId  String      @unique
+  appointment    Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  clinicalNotes  String
+  diagnosis      String
+  followUpDate   DateTime?
+  patientSummary String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  prescriptions Prescription[]
+}
+
+model Prescription {
+  id           String    @id @default(cuid())
+  visitNoteId  String
+  visitNote    VisitNote @relation(fields: [visitNoteId], references: [id], onDelete: Cascade)
+  drugName     String
+  dosage       String
+  frequency    String
+  durationDays Int
+  createdAt    DateTime  @default(now())
+
+  reminders MedicationReminder[]
+}
+
+model MedicationReminder {
+  id             String         @id @default(cuid())
+  prescriptionId String
+  prescription   Prescription   @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  patientId      String
+  scheduledAt    DateTime
+  status         ReminderStatus @default(PENDING)
+  sentAt         DateTime?
+  createdAt      DateTime       @default(now())
+}
+
+model CalendarEvent {
+  id               String      @id @default(cuid())
+  appointmentId    String      @unique
+  appointment      Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  googleEventId    String
+  googleCalendarId String
+  createdAt        DateTime    @default(now())
+}
+
+model NotificationLog {
+  id          String             @id @default(cuid())
+  recipient   String
+  type        NotificationType
+  status      NotificationStatus @default(PENDING)
+  attempts    Int                @default(0)
+  nextRetryAt DateTime?
+  payload     Json
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+}
