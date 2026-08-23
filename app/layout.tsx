@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MediCare+ | Healthcare Simplified",
+  title: "MEDICARE+ | Healthcare Simplified",
   description: "AI-Powered Healthcare Appointment Management Platform",
 };
 

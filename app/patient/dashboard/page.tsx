@@ -135,61 +135,73 @@ export default function PatientDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex text-slate-800">
-      {/* ── 1. Left Sidebar Navigation ── */}
-      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col justify-between hidden md:flex flex-shrink-0">
+      {/* ── 1. Left Sidebar Navigation (Sticky Static) ── */}
+      <aside className="w-64 bg-[#eaf6f2] border-r border-teal-100/80 flex flex-col justify-between hidden md:flex flex-shrink-0 sticky top-0 h-screen overflow-y-auto">
         <div>
           {/* Logo */}
-          <div className="p-6 flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-md shadow-blue-500/20">
-              💙
-            </div>
-            <div>
-              <h1 className="font-bold text-slate-900 text-lg leading-tight">MediCare+</h1>
-              <p className="text-[11px] text-slate-400 font-medium">Healthcare Simplified</p>
-            </div>
+          <div className="p-6 flex items-center gap-2 border-b border-teal-100/60">
+            <img src="/medicare-logo.png" alt="MEDICARE+" className="h-6 w-auto object-contain" />
+            <span className="text-xs font-extrabold tracking-wider bg-blue-100/80 text-blue-900 px-2 py-0.5 rounded-md">
+              Patient Panel
+            </span>
           </div>
 
           {/* Navigation Links */}
-          <nav className="px-4 space-y-1.5 mt-2">
+          <nav className="px-4 space-y-1 mt-3">
             <Link
               href="/patient/dashboard"
-              className="flex items-center gap-3 px-4 py-3 bg-blue-50 text-blue-700 rounded-xl font-semibold text-sm transition"
+              className="flex items-center gap-3 px-3.5 py-2.5 bg-teal-700 text-white rounded-xl font-bold text-xs shadow-2xs transition"
             >
-              <span>🏠</span> Dashboard
+              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              <span>Dashboard</span>
             </Link>
             <Link
               href="/patient/doctors"
-              className="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium text-sm transition"
+              className="flex items-center gap-3 px-3.5 py-2.5 text-slate-700 hover:bg-white/60 hover:text-slate-900 rounded-xl font-semibold text-xs transition"
             >
-              <span>📅</span> Book Appointment
+              <svg className="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span>Book Appointment</span>
             </Link>
             <Link
               href="/patient/appointments"
-              className="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium text-sm transition"
+              className="flex items-center gap-3 px-3.5 py-2.5 text-slate-700 hover:bg-white/60 hover:text-slate-900 rounded-xl font-semibold text-xs transition"
             >
-              <span>📋</span> My Appointments
+              <svg className="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <span>My Appointments</span>
             </Link>
             <Link
               href="/patient/appointments?status=COMPLETED"
-              className="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium text-sm transition"
+              className="flex items-center gap-3 px-3.5 py-2.5 text-slate-700 hover:bg-white/60 hover:text-slate-900 rounded-xl font-semibold text-xs transition"
             >
-              <span>📑</span> Past Visits
+              <svg className="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span>Past Visits</span>
             </Link>
             <Link
               href="/patient/dashboard"
-              className="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium text-sm transition"
+              className="flex items-center gap-3 px-3.5 py-2.5 text-slate-700 hover:bg-white/60 hover:text-slate-900 rounded-xl font-semibold text-xs transition"
             >
-              <span>💊</span> Medication Reminders
+              <svg className="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a6.5 6.5 0 00-9.192-9.192l-6 6a6.5 6.5 0 009.192 9.192l6-6zM10.5 10.5l3 3" />
+              </svg>
+              <span>Medication Reminders</span>
             </Link>
           </nav>
         </div>
 
         {/* Need Help Card */}
-        <div className="p-4 m-4 bg-blue-50/70 border border-blue-100 rounded-2xl">
-          <p className="font-bold text-sm text-slate-900">Need Help?</p>
-          <p className="text-xs text-slate-500 mt-1 mb-3">Our support team is here to help you</p>
-          <button className="w-full bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold py-2 px-3 rounded-xl flex items-center justify-center gap-2 transition">
-            <span>🎧</span> Contact Support →
+        <div className="p-4 m-4 bg-white/80 border border-teal-100/90 rounded-2xl shadow-2xs">
+          <p className="font-bold text-xs text-slate-900">Need Help?</p>
+          <p className="text-[11px] text-slate-500 mt-0.5 mb-3 leading-tight">Our support team is here to help you</p>
+          <button className="w-full bg-teal-700 hover:bg-teal-800 text-white text-xs font-bold py-2 px-3 rounded-xl flex items-center justify-center gap-2 transition shadow-2xs cursor-pointer">
+            Contact Support →
           </button>
         </div>
       </aside>

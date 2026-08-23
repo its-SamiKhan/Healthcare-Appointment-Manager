@@ -130,10 +130,8 @@ export default function LoginPage({ initialMode = 'login' }: LoginPageProps) {
               className="w-full h-full object-cover object-left"
             />
             <div className="absolute top-8 left-8 z-10">
-              <h2 className="text-2xl font-bold tracking-[0.22em] text-slate-900 uppercase font-sans">
-                MEDICARE+
-              </h2>
-              <p className="text-xs text-teal-800 font-bold tracking-widest uppercase mt-0.5">
+              <img src="/medicare-logo.png" alt="MEDICARE+" className="h-7 w-auto object-contain" />
+              <p className="text-[10px] text-teal-800 font-bold tracking-widest uppercase mt-1">
                 Healthcare Simplified
               </p>
             </div>
@@ -145,7 +143,7 @@ export default function LoginPage({ initialMode = 'login' }: LoginPageProps) {
               {/* Header */}
               <div className="mb-4">
                 <h1 className="text-3xl sm:text-4xl font-serif text-slate-800 font-bold tracking-tight">
-                  Login to MediCare+
+                  Login to MEDICARE+
                 </h1>
                 <p className="text-xs sm:text-sm text-slate-400 mt-1 font-medium">
                   Enter your email and password to access your portal
@@ -259,7 +257,7 @@ export default function LoginPage({ initialMode = 'login' }: LoginPageProps) {
                   Create an Account
                 </h1>
                 <p className="text-xs sm:text-sm text-slate-400 mt-1 font-medium">
-                  Join MediCare+ to manage your health or practice seamlessly
+                  Join MEDICARE+ to manage your health or practice seamlessly
                 </p>
               </div>
 
@@ -373,11 +371,9 @@ export default function LoginPage({ initialMode = 'login' }: LoginPageProps) {
               alt="MediCare+ Register Artwork"
               className="w-full h-full object-cover object-right"
             />
-            <div className="absolute top-8 right-8 z-10 text-right">
-              <h2 className="text-2xl font-bold tracking-[0.22em] text-slate-900 uppercase font-sans">
-                MEDICARE+
-              </h2>
-              <p className="text-xs text-teal-800 font-bold tracking-widest uppercase mt-0.5">
+            <div className="absolute top-8 right-8 z-10 text-right flex flex-col items-end">
+              <img src="/medicare-logo.png" alt="MEDICARE+" className="h-7 w-auto object-contain" />
+              <p className="text-[10px] text-teal-800 font-bold tracking-widest uppercase mt-1">
                 Healthcare Simplified
               </p>
             </div>
