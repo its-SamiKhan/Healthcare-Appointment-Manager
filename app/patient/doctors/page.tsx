@@ -39,7 +39,7 @@ export default function PatientDoctorsPage() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b px-6 py-4 flex items-center justify-between">
         <Link href="/patient/dashboard" className="font-bold text-gray-900">
-          ← HealthCare Manager
+          ← MediCare+
         </Link>
       </header>
 
