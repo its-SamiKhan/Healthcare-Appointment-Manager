@@ -492,13 +492,12 @@ export default function DoctorDashboard() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => triggerToast('🟢 Google Calendar 2-Way Sync Active! Practice consultations automatically sync to your calendar.')}
+            <a
+              href="/api/calendar/auth"
               className="flex items-center gap-2 bg-[#eaf6f2] hover:bg-[#d8efe8] border border-teal-200/90 text-teal-900 font-extrabold px-3.5 py-2 rounded-xl text-xs transition cursor-pointer shadow-2xs"
             >
-              <span>🟢 Google Calendar Active</span>
-            </button>
+              <span>📅 Sync My Google Calendar</span>
+            </a>
 
             <button
               onClick={() => setActiveModal('search')}
