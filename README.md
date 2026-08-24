@@ -1,6 +1,14 @@
-# Healthcare Appointment Manager
+# Healthcare Appointment & Follow-up Manager
 
-A production-grade healthcare appointment booking system built with **Next.js 15**, **PostgreSQL**, **Prisma**, **Google Gemini AI**, and **Google Calendar**.
+A production-grade healthcare appointment booking and follow-up platform built with **Next.js 15**, **PostgreSQL**, **Prisma**, **Google Gemini AI**, and **Google Calendar Integration**.
+
+---
+
+## 🌐 Live Hosted Application
+- **Live Demo URL**: [https://healthcare-appointment-manager-three.vercel.app](https://healthcare-appointment-manager-three.vercel.app)
+- **System Design Document**: [`SYSTEM_DESIGN.md`](SYSTEM_DESIGN.md)
+
+---
 
 ## 🔄 Interconnected 3-Dashboard Workflow
 
@@ -23,207 +31,186 @@ sequenceDiagram
     DB-->>Admin: 6. Recalculates real DB metrics, recent appointments, & trend analytics
 ```
 
-### 🌟 Real-Time Data Flow:
-1. **👤 Patient Portal (`/patient/dashboard`)**: Patient chooses a doctor, date, and slot, then submits their chief complaint. `POST /api/appointments` uses PostgreSQL `SELECT FOR UPDATE` transactions to prevent double booking.
-2. **✉️ Resend Email API**: Automatically dispatches HTML booking confirmation emails to both patient and doctor.
-3. **📅 Google Calendar API**: Syncs 2-way calendar events onto doctor and patient practice schedules.
-4. **🩺 Doctor Portal (`/doctor/dashboard`)**: The consultation instantly populates under *Today's Schedule* and *Appointments Directory* with Gemini AI triage urgency ratings.
-5. **🛡️ Admin Portal (`/admin/dashboard`)**: Analytics dashboard recalculates live metrics (*Total Patients, Appointments, Recent Activity Logs*) directly from Prisma DB without any hardcoded numbers.
+---
 
-## ✨ Key Features
+## ✨ Key Features & Technical Matrix
 
-| Feature | Implementation |
+| Feature | Technical Implementation |
 |---|---|
-| Role-Based Auth | JWT + RBAC (ADMIN / DOCTOR / PATIENT) |
-| Slot Conflict Prevention | `SELECT FOR UPDATE` PostgreSQL transaction |
-| Slot Hold Mechanism | 5-minute exclusive hold with auto-expiry |
-| AI Pre-Visit Summary | Gemini 2.5 Flash — urgency, chief complaint, doctor questions |
-| AI Post-Visit Summary | Patient-friendly language conversion |
-| Email Notifications | SendGrid / Gmail SMTP / Resend — Multi-provider delivery with retry queue |
-| Google Calendar Sync | OAuth 2.0 — create/update/delete events |
-| Medication Reminders | Auto-generated per prescription, sent by cron |
-| Doctor Leave Management | Cascade cancel + notify + calendar delete |
-| Audit Logs | Every critical action logged |
-| Background Jobs | Upstash QStash cron workers |
+| **Role-Based Auth** | JWT + RBAC (`ADMIN`, `DOCTOR`, `PATIENT`) with httpOnly cookies |
+| **Double-Booking Prevention** | PostgreSQL `SELECT FOR UPDATE` atomic database transactions |
+| **Slot Hold Mechanism** | 5-minute exclusive slot hold with automatic background cron cleanup |
+| **AI Pre-Visit Triage** | Google Gemini 2.5 Flash — urgency rating, chief complaint, doctor questions |
+| **AI Post-Visit Summary** | Converts doctor's clinical notes & prescriptions into patient-friendly format |
+| **Email Delivery Engine** | Multi-provider fallback (Gmail SMTP / SendGrid / Resend) with exponential backoff retries |
+| **Google Calendar Sync** | OAuth 2.0 integration — automated creation, update, and deletion of calendar events |
+| **Medication Reminders** | Generated from prescription dosage/frequency and dispatched via minute-cron worker |
+| **Doctor Leave System** | Admin leave creation triggers cascading cancellation, calendar deletion, and email notification |
+| **Audit Log System** | Comprehensive immutable logging of all critical platform actions |
 
-## 🏗️ Tech Stack
+---
 
-- **Framework**: Next.js 15 (App Router, full-stack)
-- **Language**: TypeScript (strict)
-- **Styling**: Tailwind CSS
-- **ORM**: Prisma
-- **Database**: PostgreSQL (Neon)
-- **Auth**: JWT + bcryptjs
-- **AI**: Google Gemini 2.5 Flash
-- **Email**: Resend
-- **Calendar**: Google Calendar API
-- **Background Jobs**: Upstash QStash
-- **Deployment**: Vercel + Neon
+## 🤖 LLM Prompts & Usage Guidance
 
-## 🚀 Getting Started
+### 1. Pre-Visit AI Symptom Summary Prompt
+- **Trigger**: Patient submits symptom form prior to or during appointment confirmation.
+- **Model**: `gemini-2.5-flash`
+- **Prompt Structure**:
+  ```text
+  You are a medical AI assistant helping doctors prepare for patient visits.
+
+  Analyze these patient symptoms and return a structured JSON response:
+
+  Patient Symptoms:
+  - Chief Complaint: <chiefComplaint>
+  - Duration: <duration>
+  - Severity (1-10): <severity>
+  - Previous Conditions: <previousConditions>
+  - Current Medicines: <currentMedicines>
+
+  Return ONLY a valid JSON object with this exact structure:
+  {
+    "urgency": "LOW" | "MEDIUM" | "HIGH",
+    "chiefComplaint": "concise one-line summary of main complaint",
+    "doctorQuestions": ["question 1", "question 2", "question 3"]
+  }
+  ```
+
+### 2. Post-Visit Patient-Friendly Summary Prompt
+- **Trigger**: Doctor submits clinical notes, diagnosis, and prescriptions post-consultation.
+- **Model**: `gemini-2.5-flash`
+- **Prompt Structure**:
+  ```text
+  You are a medical AI helping patients understand their visit summary.
+
+  Convert these clinical notes into simple, friendly, easy-to-understand language for a patient:
+
+  Diagnosis: <diagnosis>
+  Clinical Notes: <clinicalNotes>
+  Prescriptions: <prescriptionList>
+  Follow-up Date: <followUpDate>
+
+  Write a warm, clear patient summary that:
+  1. Explains the diagnosis in simple terms
+  2. Lists medications and WHEN to take them clearly
+  3. Mentions any important follow-up steps
+  4. Uses encouraging, non-scary language
+  ```
+
+---
+
+## 📅 Google Calendar API & OAuth 2.0 Setup Guide
+
+1. **Create Google Cloud Console Project**:
+   - Navigate to [Google Cloud Console](https://console.cloud.google.com/).
+   - Create a new project named `Healthcare Appointment Manager`.
+2. **Enable Google Calendar API**:
+   - Go to **APIs & Services > Library**.
+   - Search for **Google Calendar API** and click **Enable**.
+3. **Configure OAuth Consent Screen**:
+   - Select **External** user type.
+   - Add scopes: `openid`, `email`, `profile`, `https://www.googleapis.com/auth/calendar.events`.
+4. **Create OAuth 2.0 Credentials**:
+   - Go to **APIs & Services > Credentials > Create Credentials > OAuth Client ID**.
+   - Application type: **Web application**.
+   - Authorized JavaScript origins: `http://localhost:3000` (or `https://your-domain.vercel.app`).
+   - Authorized redirect URIs: `http://localhost:3000/api/calendar/callback`.
+5. **Update `.env`**:
+   ```env
+   GOOGLE_CLIENT_ID="your-client-id.apps.googleusercontent.com"
+   GOOGLE_CLIENT_SECRET="your-client-secret"
+   GOOGLE_REDIRECT_URI="http://localhost:3000/api/calendar/callback"
+   ```
+
+---
+
+## 🛠️ Local Installation & Setup Guide
 
 ### Prerequisites
 - Node.js 18+
-- PostgreSQL database (or Neon account)
-- Google Gemini API key
-- Resend API key
-- Google Cloud OAuth credentials
+- PostgreSQL Database (Local or Neon Serverless DB)
+- Google Gemini API Key
 
-### Setup
+### Step-by-Step Instructions
 
 ```bash
-# 1. Clone the repo
-git clone <repo-url>
+# 1. Clone repository
+git clone https://github.com/your-repo/healthcare-appointment-manager.git
 cd healthcare-appointment-manager
 
 # 2. Install dependencies
 npm install
 
-# 3. Configure environment
+# 3. Environment configuration
 cp .env.example .env
-# Fill in all values in .env
+# Edit .env and supply DATABASE_URL, GEMINI_API_KEY, JWT_SECRET, etc.
 
-# 4. Setup database
+# 4. Initialize Database Schema
 npx prisma db push
 
-# 5. Generate Prisma client
-npx prisma generate
+# 5. Seed Initial Demo Users & Doctors (Optional)
+npx tsx prisma/seed.ts
 
-# 6. Run development server
+# 6. Start Development Server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## 📋 Environment Variables
+---
 
-See [`.env.example`](.env.example) for all required variables:
+## 📋 Environment Variables Reference (`.env.example`)
 
 | Variable | Description |
 |---|---|
-| `DATABASE_URL` | Neon PostgreSQL connection string |
-| `JWT_SECRET` | Secret for signing JWTs (min 32 chars) |
-| `RESEND_API_KEY` | Resend email service key |
-| `GEMINI_API_KEY` | Google AI Studio API key |
-| `GOOGLE_CLIENT_ID` | Google OAuth client ID |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
-| `GOOGLE_REDIRECT_URI` | OAuth callback URL |
-| `CRON_SECRET` | Secret for authenticating cron jobs |
+| `DATABASE_URL` | PostgreSQL connection string |
+| `JWT_SECRET` | Secret key for JWT session tokens (min 32 chars) |
+| `GEMINI_API_KEY` | Google Gemini AI API key |
+| `RESEND_API_KEY` | Resend Email service API key |
+| `GMAIL_USER` | Gmail address (optional SMTP fallback) |
+| `GMAIL_APP_PASSWORD` | Gmail App Password (optional SMTP fallback) |
+| `GOOGLE_CLIENT_ID` | Google OAuth Client ID |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth Client Secret |
+| `GOOGLE_REDIRECT_URI` | Google OAuth Callback URL |
+| `CRON_SECRET` | Security key for cron job HTTP authorization |
 
-## 🗄️ Database Schema
+---
 
-15 tables covering the full domain model:
+## 🗄️ Database Schema Summary
 
-```
-users → doctors / patients
-appointments → symptoms → symptom_summaries (AI)
-appointments → visit_notes → prescriptions → medication_reminders
-appointments → calendar_events
-notification_logs (email audit trail)
-audit_logs (all admin actions)
-doctor_leaves
-slot_holds
-```
+The platform uses Prisma ORM connected to PostgreSQL. Key relational models:
+- **`User`**: Account credentials, roles (`ADMIN`, `DOCTOR`, `PATIENT`), and OAuth tokens.
+- **`Doctor`**: Specialization, working hours JSON, fee, rating, and slot duration.
+- **`Patient`**: Demographics and medical history links.
+- **`DoctorLeave`**: Date ranges when doctor is unavailable.
+- **`Appointment`**: Scheduled consultations linking patient, doctor, date, and status.
+- **`SlotHold`**: 5-minute transient slot reservations.
+- **`Symptom` & `SymptomSummary`**: Patient pre-visit inputs and AI triage findings.
+- **`VisitNote` & `Prescription`**: Clinical diagnoses, doctor notes, and prescribed meds.
+- **`MedicationReminder`**: Scheduled reminders generated per prescription.
+- **`CalendarEvent`**: Sync tracking for Google Calendar event IDs.
+- **`NotificationLog`**: Full audit trail of outbound emails and retry queue states.
+
+---
 
 ## 🔌 API Reference
 
 | Method | Endpoint | Description |
 |---|---|---|
-| POST | `/api/auth/register` | Register (PATIENT/DOCTOR/ADMIN) |
-| POST | `/api/auth/login` | Login |
-| GET | `/api/auth/me` | Current user |
-| POST | `/api/auth/logout` | Logout |
-| GET | `/api/doctors` | List doctors (filterable) |
-| GET | `/api/doctors/[id]/slots` | Available slots for date |
-| POST | `/api/appointments/hold` | Hold a slot (5 min) |
-| POST | `/api/appointments` | Book appointment |
-| GET | `/api/appointments/[id]` | Appointment detail |
-| PUT | `/api/appointments/[id]` | Cancel / Reschedule |
-| POST | `/api/appointments/[id]/symptoms` | Submit symptoms (triggers AI) |
-| GET | `/api/patient/dashboard` | Patient dashboard data |
-| GET | `/api/doctor/dashboard` | Doctor dashboard data |
-| POST | `/api/doctor/appointments/[id]/notes` | Submit visit notes |
-| GET | `/api/admin/analytics` | Platform analytics |
-| GET | `/api/admin/doctors` | List all doctors |
-| POST | `/api/admin/doctors` | Create doctor |
-| PUT | `/api/admin/doctors/[id]` | Update doctor |
-| DELETE | `/api/admin/doctors/[id]` | Delete doctor |
-| POST | `/api/admin/doctors/[id]/leave` | Mark doctor leave (cascade) |
-| GET | `/api/calendar/auth` | Google OAuth initiation |
-| GET | `/api/calendar/callback` | Google OAuth callback |
-| GET | `/api/cron/cleanup-holds` | Clean expired slot holds |
-| GET | `/api/cron/email-retry` | Retry failed emails |
-| GET | `/api/cron/medication-reminders` | Send due reminders |
+| `POST` | `/api/auth/register` | Register new Patient, Doctor, or Admin |
+| `POST` | `/api/auth/login` | Authenticate user & issue JWT |
+| `GET` | `/api/doctors` | List doctors with specialization filtering |
+| `GET` | `/api/doctors/[id]/slots` | Get available time slots for doctor & date |
+| `POST` | `/api/appointments/hold` | Place 5-minute exclusive hold on time slot |
+| `POST` | `/api/appointments` | Book appointment (transaction-safe) |
+| `POST` | `/api/appointments/[id]/symptoms` | Submit symptoms & trigger pre-visit AI summary |
+| `POST` | `/api/doctor/appointments/[id]/notes` | Doctor submits clinical notes & prescriptions |
+| `POST` | `/api/admin/doctors/[id]/leave` | Mark doctor leave & cascade cancel appointments |
+| `GET` | `/api/cron/medication-reminders` | Cron worker to send due medication emails |
+| `GET` | `/api/cron/email-retry` | Cron worker to retry failed notifications |
+| `GET` | `/api/cron/cleanup-holds` | Cron worker to release expired slot holds |
 
-## ⚙️ Cron Job Setup (Upstash QStash)
+---
 
-Configure these schedules in Upstash QStash:
-
-| Job | Schedule | Endpoint |
-|---|---|---|
-| Cleanup slot holds | Every minute | `GET /api/cron/cleanup-holds` |
-| Email retry queue | Every 5 minutes | `GET /api/cron/email-retry` |
-| Medication reminders | Every minute | `GET /api/cron/medication-reminders` |
-
-All cron requests must include header: `x-cron-secret: <CRON_SECRET>`
-
-## 🏥 User Flows
-
-### Patient Booking Flow
-1. Register → Login as PATIENT
-2. Browse doctors by specialization
-3. Select date → View available slots
-4. Click slot → 5-min hold created
-5. Fill symptom form
-6. Confirm → Appointment booked
-7. Confirmation email + Google Calendar event created
-8. AI analyzes symptoms → urgency + doctor questions generated
-
-### Doctor Visit Flow
-1. Login as DOCTOR
-2. View today's dashboard — urgent cases highlighted
-3. Click patient → View symptoms + AI summary
-4. After visit: Enter clinical notes + diagnosis + prescription
-5. AI generates patient-friendly summary
-6. Medication reminders auto-created for prescriptions
-
-### Admin Leave Flow
-1. Login as ADMIN
-2. Go to doctor management → Mark leave dates
-3. System finds all confirmed appointments in range
-4. Auto-cancels appointments → sends emails to patients
-5. Google Calendar events deleted
-6. Full audit trail written
-
-## 🔒 Security
-
-- Passwords hashed with bcrypt (12 rounds)
-- httpOnly JWT cookies (7-day expiry)
-- Role-based middleware on all protected routes
-- Cron endpoints protected by `CRON_SECRET`
-- SQL injection prevented via Prisma parameterized queries
-
-## 📦 Deployment
-
-### Vercel
-```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Deploy
-vercel --prod
-```
-
-Set all environment variables in Vercel dashboard.
-
-### Database
-Use [Neon](https://neon.tech) — free tier supports this project.
-
-After deploying, run:
-```bash
-npx prisma db push
-```
-
-## 📝 License
-
-MIT
+## 📄 License
+MIT License
