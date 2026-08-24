@@ -636,6 +636,12 @@ export default function PatientDashboard() {
           </div>
 
           <div className="flex items-center gap-3">
+            <a
+              href="/api/calendar/auth"
+              className="flex items-center gap-2 bg-[#eaf6f2] hover:bg-[#d8efe8] border border-teal-200/90 text-teal-900 font-extrabold px-3.5 py-2 rounded-xl text-xs transition cursor-pointer shadow-2xs"
+            >
+              <span>📅 Connect Google Calendar</span>
+            </a>
             <div className="flex items-center gap-2.5">
               <GenderAvatar name={user.name} className="w-8 h-8" iconClassName="w-4.5 h-4.5" />
               <div className="text-left hidden sm:block">
@@ -981,10 +987,30 @@ export default function PatientDashboard() {
 
           {/* TAB 2: MY APPOINTMENTS */}
           {activeTab === 'appointments' && (
-            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-bold text-slate-900 text-lg">My Active Appointments</h3>
+            <div className="space-y-6">
+              {/* Google Calendar Integration Banner */}
+              <div className="bg-gradient-to-r from-teal-900 to-slate-900 text-white rounded-3xl p-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 bg-teal-800/80 rounded-2xl flex items-center justify-center font-bold text-xl">
+                    📅
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-white text-base">Google Calendar 2-Way Synchronization</h4>
+                    <p className="text-xs text-teal-200 mt-0.5 font-medium">Connect your Google account to automatically sync all your doctor appointments & reminders to your personal Google Calendar.</p>
+                  </div>
+                </div>
+                <a
+                  href="/api/calendar/auth"
+                  className="bg-white hover:bg-slate-100 text-teal-950 font-extrabold text-xs px-5 py-3 rounded-2xl transition cursor-pointer shadow-md whitespace-nowrap"
+                >
+                  📅 Connect Google Calendar →
+                </a>
+              </div>
+
+              <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-lg">My Active Appointments</h3>
                   <p className="text-xs text-slate-400 mt-0.5 font-medium">Scheduled consultations and video session links</p>
                 </div>
                 <button
@@ -1024,7 +1050,8 @@ export default function PatientDashboard() {
                 ))}
               </div>
             </div>
-          )}
+          </div>
+        )}
 
           {/* TAB 3: PAST VISITS & AI SUMMARIES */}
           {activeTab === 'visits' && (

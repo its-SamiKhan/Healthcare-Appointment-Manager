@@ -492,6 +492,13 @@ export default function DoctorDashboard() {
           </div>
 
           <div className="flex items-center gap-3">
+            <a
+              href="/api/calendar/auth"
+              className="flex items-center gap-2 bg-[#eaf6f2] hover:bg-[#d8efe8] border border-teal-200/90 text-teal-900 font-extrabold px-3.5 py-2 rounded-xl text-xs transition cursor-pointer shadow-2xs"
+            >
+              <span>📅 Connect Google Calendar</span>
+            </a>
+
             <button
               onClick={() => setActiveModal('search')}
               className="p-2 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-50 transition cursor-pointer"
@@ -499,7 +506,6 @@ export default function DoctorDashboard() {
             >
               <IconSearch className="w-4 h-4" />
             </button>
-
 
             <div className="flex items-center gap-2.5 pl-3 border-l border-slate-200">
               <GenderAvatar name={user.name} className="w-8 h-8" iconClassName="w-4.5 h-4.5" />
@@ -830,9 +836,12 @@ export default function DoctorDashboard() {
                   <p className="text-xs text-slate-400 mt-0.5">Real-time 2-way Google Calendar synchronization for patient appointments</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1.5 rounded-xl border border-emerald-200">
-                    ● Google Calendar Synced
-                  </span>
+                  <a
+                    href="/api/calendar/auth"
+                    className="bg-[#eaf6f2] hover:bg-[#d8efe8] text-teal-900 border border-teal-200 text-xs font-extrabold px-3.5 py-2 rounded-xl transition cursor-pointer shadow-2xs"
+                  >
+                    📅 Sync Google Calendar
+                  </a>
                   <button onClick={() => setActiveModal('block')} className="bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer">
                     + Block Time Out
                   </button>
