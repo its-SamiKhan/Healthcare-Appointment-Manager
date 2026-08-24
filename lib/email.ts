@@ -1,13 +1,20 @@
+import sgMail from '@sendgrid/mail'
 import nodemailer from 'nodemailer'
 import { Resend } from 'resend'
 import { prisma } from '@/lib/prisma'
 import { NotificationType, NotificationStatus, Prisma } from '@prisma/client'
 
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || ''
+const SENDGRID_FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || process.env.FROM_EMAIL || ''
 const GMAIL_USER = process.env.GMAIL_USER || ''
 const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD || ''
 const RESEND_API_KEY = process.env.RESEND_API_KEY || ''
-const FROM_EMAIL = process.env.FROM_EMAIL || GMAIL_USER || 'onboarding@resend.dev'
+const FROM_EMAIL = process.env.FROM_EMAIL || 'onboarding@resend.dev'
 const APP_NAME = 'HealthCare Manager'
+
+if (SENDGRID_API_KEY) {
+  sgMail.setApiKey(SENDGRID_API_KEY)
+}
 
 let _nodemailerTransporter: nodemailer.Transporter | null = null
 function getNodemailer(): nodemailer.Transporter | null {
@@ -57,10 +64,29 @@ async function sendEmail(params: {
   })
 
   try {
-    const transporter = getNodemailer()
+    // 1. Send via SendGrid API if SENDGRID_API_KEY is configured
+    if (SENDGRID_API_KEY) {
+      const fromAddress = SENDGRID_FROM_EMAIL || 'noreply@healthcare-app.com'
+      await sgMail.send({
+        to: params.to,
+        from: {
+          email: fromAddress,
+          name: APP_NAME,
+        },
+        subject: params.subject,
+        html: params.html,
+      })
 
+      await prisma.notificationLog.update({
+        where: { id: log.id },
+        data: { status: NotificationStatus.SENT, attempts: 1 },
+      })
+      return
+    }
+
+    // 2. Send via Gmail SMTP if configured
+    const transporter = getNodemailer()
     if (transporter) {
-      // Send via Gmail SMTP (100% FREE, NO DOMAIN REQUIRED, DELIVERS TO ANY RECIPIENT EMAIL WORLDWIDE)
       await transporter.sendMail({
         from: `"${APP_NAME}" <${GMAIL_USER}>`,
         to: params.to,
@@ -75,7 +101,7 @@ async function sendEmail(params: {
       return
     }
 
-    // Fallback to Resend API
+    // 3. Fallback to Resend API
     const resend = getResend()
     const response = await resend.emails.send({
       from: `${APP_NAME} <${FROM_EMAIL}>`,
@@ -86,17 +112,6 @@ async function sendEmail(params: {
 
     if (response.error) {
       console.error(`[EMAIL RESEND API ERROR] ${response.error.name}: ${response.error.message}`)
-
-      if (
-        response.error.message?.includes('can only send to your own email address') ||
-        response.error.message?.includes('testing mode') ||
-        response.error.name === 'validation_error'
-      ) {
-        console.warn(
-          `[RESEND SANDBOX RESTRICTION] Resend free testing domain (${FROM_EMAIL}) restricts direct delivery to unverified recipient (${params.to}). Notification stored in database.`
-        )
-      }
-
       await prisma.notificationLog.update({
         where: { id: log.id },
         data: { status: NotificationStatus.FAILED, attempts: 1 },
