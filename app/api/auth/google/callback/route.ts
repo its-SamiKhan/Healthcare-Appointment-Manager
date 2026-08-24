@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import { signJWT, hashPassword, verifyJWT } from '@/lib/auth'
+import { signJWT, hashPassword } from '@/lib/auth'
 
-// GET /api/calendar/callback — Google OAuth Callback (Handles SSO Login & Calendar Sync)
+// GET /api/auth/google/callback
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
   const error = searchParams.get('error')
-  const state = searchParams.get('state')
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-  const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${baseUrl}/api/calendar/callback`
+  const redirectUri = `${baseUrl}/api/auth/google/callback`
 
   if (error || !code) {
     console.error('[GOOGLE OAUTH ERROR]', error)
@@ -21,7 +20,7 @@ export async function GET(request: NextRequest) {
     const clientId = process.env.GOOGLE_CLIENT_ID
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET
 
-    // 1. Exchange code for Google OAuth tokens
+    // 1. Exchange authorization code for tokens
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -55,7 +54,7 @@ export async function GET(request: NextRequest) {
     const email = googleUser.email
     const name = googleUser.name || email.split('@')[0]
 
-    // 3. Find existing user or create new Google User
+    // 3. Find existing user or register new Google user
     let user = await prisma.user.findUnique({
       where: { email },
       include: { doctor: true, patient: true },
@@ -88,7 +87,7 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // 4. Issue JWT auth token cookie
+    // 4. Issue JWT auth token
     const token = await signJWT({
       userId: user.id,
       email: user.email,
@@ -97,7 +96,7 @@ export async function GET(request: NextRequest) {
     })
 
     const roleTarget = user.role.toLowerCase()
-    const redirectUrl = new URL(`/${roleTarget}/dashboard?google=connected`, baseUrl)
+    const redirectUrl = new URL(`/${roleTarget}/dashboard`, baseUrl)
     const response = NextResponse.redirect(redirectUrl)
 
     response.headers.set(
