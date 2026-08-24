@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import { signJWT, hashPassword, getAuthCookieHeader } from '@/lib/auth'
+import { signJWT, hashPassword } from '@/lib/auth'
 
 // GET /api/auth/google/callback
 export async function GET(request: NextRequest) {
@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get('code')
   const error = searchParams.get('error')
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin
   const redirectUri = `${baseUrl}/api/auth/google/callback`
 
   if (error || !code) {
@@ -99,7 +99,13 @@ export async function GET(request: NextRequest) {
     const redirectUrl = new URL(`/${roleTarget}/dashboard?token=${token}`, baseUrl)
     const response = NextResponse.redirect(redirectUrl)
 
-    response.headers.set('Set-Cookie', getAuthCookieHeader(token))
+    response.cookies.set('token', token, {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60,
+      secure: process.env.NODE_ENV === 'production',
+    })
 
     return response
   } catch (err) {

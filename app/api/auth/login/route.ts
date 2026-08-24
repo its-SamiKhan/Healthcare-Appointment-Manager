@@ -76,7 +76,13 @@ export async function POST(request: NextRequest) {
       token,
     })
 
-    response.headers.set('Set-Cookie', getAuthCookieHeader(token))
+    response.cookies.set('token', token, {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60,
+      secure: process.env.NODE_ENV === 'production',
+    })
 
     return response
   } catch (error) {

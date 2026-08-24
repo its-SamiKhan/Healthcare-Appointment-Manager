@@ -112,6 +112,7 @@ function IconSparkles({ className = "w-4 h-4" }: { className?: string }) {
 interface AppointmentItem {
   id: string
   time: string
+  date?: string
   duration: string
   patientName: string
   patientPhone?: string
@@ -294,16 +295,19 @@ export default function DoctorDashboard() {
 
   // Fetch real numbers & records from backend API
   useEffect(() => {
+    let token: string | null = null
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
       const tokenFromUrl = params.get('token')
       if (tokenFromUrl) {
         document.cookie = `token=${tokenFromUrl}; path=/; max-age=604800; SameSite=Lax`
         localStorage.setItem('token', tokenFromUrl)
+        token = tokenFromUrl
+      } else {
+        token = localStorage.getItem('token')
       }
     }
 
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
     const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
 
     Promise.all([
@@ -632,7 +636,7 @@ export default function DoctorDashboard() {
                                 )}
                               </div>
                               <p className="text-xs text-slate-500 font-medium">{apt.reason}</p>
-                              <p className="text-[10px] text-teal-700 font-bold mt-0.5">🗓️ {apt.time} ({apt.duration})</p>
+                              <p className="text-[10px] text-teal-700 font-bold mt-0.5">🗓️ {apt.date || '24 Aug, 2026'} at {apt.time} ({apt.duration})</p>
                             </div>
                           </div>
 
@@ -737,7 +741,7 @@ export default function DoctorDashboard() {
                 <table className="w-full text-left text-xs">
                   <thead>
                     <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider">
-                      <th className="pb-3">Time</th>
+                      <th className="pb-3">Date & Time</th>
                       <th className="pb-3">Patient</th>
                       <th className="pb-3">Reason</th>
                       <th className="pb-3">Triage Urgency</th>
@@ -748,7 +752,12 @@ export default function DoctorDashboard() {
                   <tbody className="divide-y divide-slate-100">
                     {todaySchedule.map((apt) => (
                       <tr key={apt.id} className="hover:bg-slate-50/80 transition">
-                        <td className="py-4 font-bold text-slate-900">{apt.time}</td>
+                        <td className="py-4 font-bold text-slate-900">
+                          <div className="flex flex-col">
+                            <span>{apt.date || '24 Aug, 2026'}</span>
+                            <span className="text-[10px] text-teal-700 font-semibold">{apt.time}</span>
+                          </div>
+                        </td>
                         <td className="py-4 font-bold text-slate-900">{apt.patientName}</td>
                         <td className="py-4 text-slate-700 font-medium">{apt.reason}</td>
                         <td className="py-4">
@@ -1041,7 +1050,11 @@ export default function DoctorDashboard() {
                     Ph: {selectedAppointment.patientPhone || '+91-9782955955'}
                   </span>
                 </div>
-                <p className="text-slate-400 font-medium mt-0.5">Scheduled Time: {selectedAppointment.time} · Demographic: {selectedAppointment.ageGender || '34 Yrs / Male'}</p>
+                <p className="text-slate-500 font-semibold mt-1 flex items-center gap-2 flex-wrap">
+                  <span>🗓️ <span className="font-bold text-slate-800">Scheduled Date & Time:</span> {selectedAppointment.date || '24 Aug, 2026'} at {selectedAppointment.time}</span>
+                  <span>·</span>
+                  <span>Demographic: {selectedAppointment.ageGender || '34 Yrs / Male'}</span>
+                </p>
               </div>
               <button
                 onClick={() => setActiveModal(null)}

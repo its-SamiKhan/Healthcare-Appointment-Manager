@@ -83,6 +83,7 @@ export async function GET(request: NextRequest) {
       todaySchedule: todayAppointments.map((apt) => ({
         id: apt.id,
         time: apt.startTime || '09:30 AM',
+        date: new Date(apt.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) || '24 Aug, 2026',
         duration: '30 min',
         patientName: apt.patient.user.name,
         ageGender: apt.patient.phone ? `Ph: ${apt.patient.phone}` : 'Patient',

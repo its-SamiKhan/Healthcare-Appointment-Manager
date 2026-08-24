@@ -388,16 +388,19 @@ export default function PatientDashboard() {
   }, [])
 
   useEffect(() => {
+    let token: string | null = null
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
       const tokenFromUrl = params.get('token')
       if (tokenFromUrl) {
         document.cookie = `token=${tokenFromUrl}; path=/; max-age=604800; SameSite=Lax`
         localStorage.setItem('token', tokenFromUrl)
+        token = tokenFromUrl
+      } else {
+        token = localStorage.getItem('token')
       }
     }
 
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
     const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
 
     fetch('/api/auth/me', { headers })
