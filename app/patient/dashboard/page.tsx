@@ -52,15 +52,6 @@ function IconUser({ className = "w-4 h-4" }: { className?: string }) {
   )
 }
 
-function IconSettings({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-    </svg>
-  )
-}
-
 function IconSearch({ className = "w-4 h-4" }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
@@ -110,7 +101,20 @@ interface PastVisit {
 }
 
 export default function PatientDashboard() {
-  const [user, setUser] = useState({ name: 'John Doe', email: 'john@example.com' })
+  const [user, setUser] = useState({
+    name: 'Aarav Sharma',
+    email: 'aarav.sharma@example.com',
+    phone: '+91 98765 43210',
+    bloodGroup: 'B+',
+    dob: '1994-08-14',
+    gender: 'Male',
+    height: '178 cm',
+    weight: '72 kg',
+    allergies: 'Penicillin',
+    conditions: 'Mild Hypertension',
+    emergencyContact: 'Sunita Sharma (Mother) - +91 98123 45678',
+  })
+
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('dashboard')
   const [toastMessage, setToastMessage] = useState<string | null>(null)
@@ -220,6 +224,74 @@ export default function PatientDashboard() {
 
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor>(doctorsList[0])
 
+  // Active Patient Appointments List
+  const [myAppointments] = useState([
+    {
+      id: 'apt1',
+      doctorName: 'Dr. Ananya Sharma',
+      specialization: 'General Physician',
+      date: 'Sat 18 May, 2025',
+      time: '11:30 AM',
+      type: 'In-Clinic Visit',
+      status: 'Confirmed',
+      fee: 500,
+    },
+    {
+      id: 'apt2',
+      doctorName: 'Dr. Rajesh Patel',
+      specialization: 'Cardiologist',
+      date: 'Sun 19 May, 2025',
+      time: '03:30 PM',
+      type: 'In-Clinic Visit',
+      status: 'Confirmed',
+      fee: 750,
+    },
+    {
+      id: 'apt3',
+      doctorName: 'Dr. Sunita Rao',
+      specialization: 'Dermatologist',
+      date: 'Sun 25 May, 2025',
+      time: '04:00 PM',
+      type: 'In-Clinic Visit',
+      status: 'Scheduled',
+      fee: 600,
+    },
+  ])
+
+  // Active Patient Prescriptions List
+  const [prescriptions] = useState([
+    {
+      id: 'rx1',
+      drugName: 'Telmisartan 40mg',
+      dosage: '1 Tab',
+      frequency: 'Once daily before breakfast',
+      duration: '30 Days Supply',
+      doctorName: 'Dr. Rajesh Patel',
+      category: 'Hypertension',
+      status: 'Active',
+    },
+    {
+      id: 'rx2',
+      drugName: 'Paracetamol 650mg',
+      dosage: '1 Tab',
+      frequency: '3x daily after meals',
+      duration: '5 Days Supply',
+      doctorName: 'Dr. Ananya Sharma',
+      category: 'Fever & Pain Relief',
+      status: 'Active',
+    },
+    {
+      id: 'rx3',
+      drugName: 'ORS Hydration Powder',
+      dosage: '1 Sachet',
+      frequency: 'Twice daily in 1L water',
+      duration: '5 Days Supply',
+      doctorName: 'Dr. Ananya Sharma',
+      category: 'Rehydration',
+      status: 'Active',
+    },
+  ])
+
   // Past Visits with AI Post-Visit Summaries
   const [pastVisits] = useState<PastVisit[]>([
     {
@@ -227,7 +299,7 @@ export default function PatientDashboard() {
       doctorName: 'Dr. Ananya Sharma',
       date: '10 May, 2025',
       diagnosis: 'Acute Viral Fever & Mild Dehydration',
-      aiSummary: '✨ AI Summary: Patient presented with 101°F fever and fatigue. Advised 5 days bed rest, 3L daily water intake, and strict adherence to Paracetamol 650mg. Platelet count normal. Avoid strenuous workouts for 1 week.',
+      aiSummary: '✨ Gemini AI Summary: Patient presented with 101°F fever and fatigue. Advised 5 days bed rest, 3L daily water intake, and strict adherence to Paracetamol 650mg. Platelet count normal. Avoid strenuous workouts for 1 week.',
       prescriptions: [
         { name: 'Paracetamol 650mg', dosage: '1 Tab', frequency: '3x daily after meals (5 days)' },
         { name: 'ORS Electrolyte Powder', dosage: '1 Sachet', frequency: 'Twice daily in 1L water' },
@@ -239,20 +311,53 @@ export default function PatientDashboard() {
       doctorName: 'Dr. Rajesh Patel',
       date: '28 Apr, 2025',
       diagnosis: 'Mild Hypertension (Stage 1)',
-      aiSummary: '✨ AI Summary: Blood pressure recorded at 135/88 mmHg. Advised low-salt Mediterranean diet, 30 mins morning walk, and daily BP logging.',
+      aiSummary: '✨ Gemini AI Summary: Blood pressure recorded at 135/88 mmHg. Advised low-salt Mediterranean diet, 30 mins morning walk, and daily BP logging.',
       prescriptions: [
         { name: 'Telmisartan 40mg', dosage: '1 Tab', frequency: 'Once daily before breakfast' },
       ],
     },
+    {
+      id: 'v3',
+      doctorName: 'Dr. Vikram Malhotra',
+      date: '15 Mar, 2025',
+      diagnosis: 'Lumbar Strain & Muscle Spasm',
+      aiSummary: '✨ Gemini AI Summary: Lower back strain from sedentary desk work. Advised ergonomic chair setup, warm compress application, and daily hamstrings stretching exercises.',
+      prescriptions: [
+        { name: 'Volini Pain Gel', dosage: 'Apply topically', frequency: 'Twice daily' },
+      ],
+    },
   ])
 
-  const [selectedPastVisit, setSelectedPastVisit] = useState<PastVisit | null>(null)
+  // Sync tab with URL on mount & popstate
+  useEffect(() => {
+    const syncTabFromUrl = () => {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search)
+        const tab = params.get('tab')
+        if (tab && ['appointments', 'visits', 'prescriptions', 'reminders', 'profile'].includes(tab)) {
+          setActiveTab(tab)
+        } else {
+          setActiveTab('dashboard')
+        }
+      }
+    }
+
+    syncTabFromUrl()
+    window.addEventListener('popstate', syncTabFromUrl)
+    return () => window.removeEventListener('popstate', syncTabFromUrl)
+  }, [])
 
   useEffect(() => {
     fetch('/api/auth/me')
       .then((r) => r.json())
       .then((d) => {
-        if (d.data) setUser({ name: d.data.name, email: d.data.email })
+        if (d.data) {
+          setUser((prev) => ({
+            ...prev,
+            name: d.data.name || 'Aarav Sharma',
+            email: d.data.email || 'aarav.sharma@example.com',
+          }))
+        }
       })
 
     fetch('/api/doctors')
@@ -286,10 +391,23 @@ export default function PatientDashboard() {
     setTimeout(() => setToastMessage(null), 4000)
   }
 
+  const handleTabSwitch = (tabId: string) => {
+    setActiveTab(tabId)
+    if (typeof window !== 'undefined') {
+      const url = tabId === 'dashboard' ? '/patient/dashboard' : `/patient/dashboard?tab=${tabId}`
+      window.history.pushState({}, '', url)
+    }
+  }
+
   const handleConfirmBooking = (e: React.FormEvent) => {
     e.preventDefault()
     setActiveModal(null)
     triggerToast(`🎉 Appointment Confirmed with ${selectedDoctor.name} for ${selectedDate} at ${selectedSlot}!`)
+  }
+
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault()
+    triggerToast('✓ Patient Health Profile updated successfully!')
   }
 
   const filteredDoctors = doctorsList.filter((doc) => {
@@ -329,35 +447,33 @@ export default function PatientDashboard() {
             </span>
           </div>
 
-          {/* Navigation Links with Minimal SVGs */}
+          {/* Navigation Links (Settings Option Removed per Request) */}
           <nav className="px-4 space-y-1 mt-3">
             {[
               { id: 'dashboard', label: 'Dashboard', Icon: IconDashboard },
-              { id: 'book', label: 'Book Appointment', Icon: IconCalendar },
               { id: 'appointments', label: 'My Appointments', Icon: IconFileText },
-              { id: 'visits', label: 'Past Visits & AI Summaries', Icon: IconSparkles, badge: 'AI' },
+              { id: 'visits', label: 'AI Visit Summaries', Icon: IconSparkles, badge: 'AI' },
               { id: 'prescriptions', label: 'Prescriptions', Icon: IconPill },
               { id: 'reminders', label: 'Reminders', Icon: IconBell },
               { id: 'profile', label: 'Profile', Icon: IconUser },
-              { id: 'settings', label: 'Settings', Icon: IconSettings },
             ].map((nav) => {
               const IconComp = nav.Icon
               return (
                 <button
                   key={nav.id}
-                  onClick={() => setActiveTab(nav.id)}
+                  onClick={() => handleTabSwitch(nav.id)}
                   className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-semibold text-xs transition cursor-pointer ${
                     activeTab === nav.id
                       ? 'bg-teal-700 text-white font-bold shadow-2xs'
                       : 'text-slate-700 hover:bg-white/60 hover:text-slate-900'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <IconComp className={`w-4 h-4 ${activeTab === nav.id ? 'text-white' : 'text-slate-600'}`} />
-                    <span>{nav.label}</span>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <IconComp className={`w-4 h-4 flex-shrink-0 ${activeTab === nav.id ? 'text-white' : 'text-slate-600'}`} />
+                    <span className="whitespace-nowrap truncate">{nav.label}</span>
                   </div>
                   {nav.badge && (
-                    <span className="bg-purple-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase">
+                    <span className="bg-purple-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase ml-1 flex-shrink-0">
                       {nav.badge}
                     </span>
                   )}
@@ -413,16 +529,7 @@ export default function PatientDashboard() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => triggerToast('Notification: Reminder to take Telmisartan 40mg at 09:00 AM')}
-              className="relative p-2 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-50 transition cursor-pointer"
-              title="Notifications"
-            >
-              <IconBell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-            </button>
-
-            <div className="flex items-center gap-2.5 pl-3 border-l border-slate-200">
+            <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 bg-blue-700 text-white rounded-full flex items-center justify-center font-bold text-xs">
                 {user.name.charAt(0)}
               </div>
@@ -436,8 +543,62 @@ export default function PatientDashboard() {
 
         {/* Dashboard Body */}
         <main className="p-8 max-w-7xl mx-auto w-full space-y-8">
-          {(activeTab === 'dashboard' || activeTab === 'book') && (
+          {/* TAB 1: DASHBOARD VIEW */}
+          {activeTab === 'dashboard' && (
             <>
+              {/* ── Active Reminders & Upcoming Consultations Banner Block ── */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Card 1: Medication Reminder */}
+                <div className="bg-gradient-to-r from-purple-950 via-slate-900 to-indigo-950 text-white rounded-3xl p-5 shadow-lg border border-purple-900/60 flex items-center justify-between">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-10 h-10 bg-purple-800/60 rounded-2xl flex items-center justify-center text-purple-300">
+                      <IconPill className="w-5 h-5 text-purple-300" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-bold text-white">Medication Reminder</p>
+                        <span className="bg-purple-800/80 text-purple-200 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase">
+                          09:00 AM Today
+                        </span>
+                      </div>
+                      <p className="text-xs text-purple-200 font-medium mt-0.5">Telmisartan 40mg (1 Tab - Empty Stomach)</p>
+                      <p className="text-[10px] text-purple-300/80 mt-0.5">Prescribed by Dr. Rajesh Patel · Hypertension Care</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => triggerToast('✓ Medication Telmisartan 40mg marked as taken!')}
+                    className="bg-purple-700 hover:bg-purple-600 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition cursor-pointer whitespace-nowrap shadow-2xs"
+                  >
+                    Mark Taken ✓
+                  </button>
+                </div>
+
+                {/* Card 2: Upcoming Consultation Session */}
+                <div className="bg-gradient-to-r from-teal-950 via-slate-900 to-emerald-950 text-white rounded-3xl p-5 shadow-lg border border-teal-900/60 flex items-center justify-between">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-10 h-10 bg-teal-800/60 rounded-2xl flex items-center justify-center text-teal-300">
+                      <IconCalendar className="w-5 h-5 text-teal-300" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-bold text-white">Upcoming Session</p>
+                        <span className="bg-emerald-800/80 text-emerald-200 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase">
+                          Today 11:30 AM
+                        </span>
+                      </div>
+                      <p className="text-xs text-teal-200 font-medium mt-0.5">Dr. Ananya Sharma (General Physician)</p>
+                      <p className="text-[10px] text-teal-300/80 mt-0.5">Confirmed · In-Clinic Consultation</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => triggerToast('Viewing appointment details for Dr. Ananya Sharma')}
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition cursor-pointer whitespace-nowrap shadow-2xs"
+                  >
+                    View Details →
+                  </button>
+                </div>
+              </div>
+
               {/* Main 12 Column Layout: Left 8 Cols (Search + Specialization + Doctor Cards) + Right 4 Cols (Booking Panel) */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 
@@ -681,11 +842,58 @@ export default function PatientDashboard() {
             </>
           )}
 
-          {/* TAB: PAST VISITS & AI SUMMARIES */}
+          {/* TAB 2: MY APPOINTMENTS */}
+          {activeTab === 'appointments' && (
+            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-slate-900 text-lg">My Active Appointments</h3>
+                  <p className="text-xs text-slate-400 mt-0.5 font-medium">Scheduled consultations and video session links</p>
+                </div>
+                <button
+                  onClick={() => handleTabSwitch('dashboard')}
+                  className="bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-2xs cursor-pointer"
+                >
+                  + Book New Appointment
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {myAppointments.map((apt) => (
+                  <div key={apt.id} className="p-5 rounded-3xl border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-slate-50/60 hover:border-teal-300 transition">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-teal-100 text-teal-900 rounded-2xl flex items-center justify-center font-bold text-base">
+                        📅
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-900 text-sm">{apt.doctorName}</h4>
+                        <p className="text-xs text-slate-500 font-medium">{apt.specialization} · {apt.type}</p>
+                        <p className="text-[11px] text-teal-700 font-bold mt-1">🗓️ {apt.date} at {apt.time}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                      <span className="bg-emerald-100 text-emerald-800 text-xs px-3 py-1 rounded-xl font-bold">
+                        {apt.status}
+                      </span>
+                      <button
+                        onClick={() => triggerToast(`Reschedule request sent for appointment with ${apt.doctorName}`)}
+                        className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs px-3 py-2 rounded-xl transition cursor-pointer"
+                      >
+                        Reschedule
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3: PAST VISITS & AI SUMMARIES */}
           {activeTab === 'visits' && (
             <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs space-y-6">
               <div>
-                <h3 className="font-bold text-slate-900 text-lg">Past Visits & AI Post-Visit Summaries</h3>
+                <h3 className="font-bold text-slate-900 text-lg">AI Visit Summaries & Clinical History</h3>
                 <p className="text-xs text-slate-400 mt-0.5 font-medium">Gemini AI clinical summaries, doctor advice, and prescribed medications</p>
               </div>
 
@@ -724,11 +932,164 @@ export default function PatientDashboard() {
             </div>
           )}
 
-          {/* OTHER TABS */}
-          {['appointments', 'prescriptions', 'reminders', 'profile', 'settings'].includes(activeTab) && (
-            <div className="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-2xs space-y-4">
-              <h3 className="font-bold text-slate-900 text-lg capitalize">{activeTab} Manager</h3>
-              <p className="text-xs text-slate-500">Your patient {activeTab} information synchronized with your medical records.</p>
+          {/* TAB 4: PRESCRIPTIONS */}
+          {activeTab === 'prescriptions' && (
+            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-slate-900 text-lg">Active E-Prescriptions Manager</h3>
+                  <p className="text-xs text-slate-400 mt-0.5 font-medium">Medications prescribed by your consulting doctors</p>
+                </div>
+                <button
+                  onClick={() => triggerToast('Downloaded official e-prescription PDF!')}
+                  className="bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition cursor-pointer"
+                >
+                  Download Rx PDF
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {prescriptions.map((rx) => (
+                  <div key={rx.id} className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase">
+                        {rx.category}
+                      </span>
+                      <span className="text-[10px] text-emerald-600 font-bold">● {rx.status}</span>
+                    </div>
+
+                    <div>
+                      <h4 className="font-bold text-slate-900 text-sm">{rx.drugName}</h4>
+                      <p className="text-xs text-slate-500 mt-0.5">{rx.dosage} · {rx.frequency}</p>
+                      <p className="text-[11px] text-slate-400 mt-1">Prescribed by {rx.doctorName}</p>
+                    </div>
+
+                    <button
+                      onClick={() => triggerToast(`Dose reminder set for ${rx.drugName}`)}
+                      className="w-full bg-white border border-slate-200 hover:bg-teal-50 text-teal-800 text-xs font-bold py-2 rounded-xl transition cursor-pointer"
+                    >
+                      ⏰ Set Dose Reminder
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 5: REMINDERS */}
+          {activeTab === 'reminders' && (
+            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs space-y-6">
+              <div>
+                <h3 className="font-bold text-slate-900 text-lg">Active Medication & Consultation Reminders</h3>
+                <p className="text-xs text-slate-400 mt-0.5 font-medium">Daily dose schedule & upcoming medical checkups</p>
+              </div>
+
+              <div className="space-y-3">
+                <div className="p-4 bg-purple-50 rounded-2xl border border-purple-100 flex items-center justify-between">
+                  <div>
+                    <p className="font-bold text-slate-900 text-xs">Telmisartan 40mg (1 Tab - Empty Stomach)</p>
+                    <p className="text-[11px] text-slate-500">Scheduled for 09:00 AM Today · Prescribed by Dr. Rajesh Patel</p>
+                  </div>
+                  <button onClick={() => triggerToast('✓ Dose marked as taken!')} className="bg-purple-700 text-white font-bold text-xs px-4 py-2 rounded-xl cursor-pointer">
+                    Mark Taken ✓
+                  </button>
+                </div>
+
+                <div className="p-4 bg-teal-50 rounded-2xl border border-teal-100 flex items-center justify-between">
+                  <div>
+                    <p className="font-bold text-slate-900 text-xs">Doctor Session with Dr. Ananya Sharma</p>
+                    <p className="text-[11px] text-slate-500">Scheduled for Today at 11:30 AM · General Medicine Consultation</p>
+                  </div>
+                  <button onClick={() => triggerToast('Viewing appointment details for Dr. Ananya Sharma')} className="bg-teal-700 text-white font-bold text-xs px-4 py-2 rounded-xl cursor-pointer">
+                    View Details →
+                  </button>
+                </div>
+
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">
+                  <div>
+                    <p className="font-bold text-slate-900 text-xs">Paracetamol 650mg (After Lunch)</p>
+                    <p className="text-[11px] text-slate-500">Scheduled for 02:00 PM Today · Fever & Pain Relief</p>
+                  </div>
+                  <button onClick={() => triggerToast('✓ Dose marked as taken!')} className="bg-slate-800 text-white font-bold text-xs px-4 py-2 rounded-xl cursor-pointer">
+                    Mark Taken ✓
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 6: PROFILE */}
+          {activeTab === 'profile' && (
+            <div className="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-2xs space-y-6">
+              <div>
+                <h3 className="font-bold text-slate-900 text-xl">Patient Health Profile</h3>
+                <p className="text-xs text-slate-500">Manage your personal details, blood group, allergies, and emergency contacts</p>
+              </div>
+
+              <form onSubmit={handleSaveProfile} className="space-y-4 text-xs">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-slate-500 mb-1 font-bold">Full Name</label>
+                    <input
+                      type="text"
+                      value={user.name}
+                      onChange={(e) => setUser({ ...user, name: e.target.value })}
+                      className="w-full p-2.5 border rounded-xl bg-white font-bold text-slate-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-500 mb-1 font-bold">Email Address</label>
+                    <input
+                      type="email"
+                      value={user.email}
+                      onChange={(e) => setUser({ ...user, email: e.target.value })}
+                      className="w-full p-2.5 border rounded-xl bg-white font-bold text-slate-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-500 mb-1 font-bold">Phone Number</label>
+                    <input
+                      type="text"
+                      value={user.phone}
+                      onChange={(e) => setUser({ ...user, phone: e.target.value })}
+                      className="w-full p-2.5 border rounded-xl bg-white font-bold text-slate-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-500 mb-1 font-bold">Blood Group</label>
+                    <input
+                      type="text"
+                      value={user.bloodGroup}
+                      onChange={(e) => setUser({ ...user, bloodGroup: e.target.value })}
+                      className="w-full p-2.5 border rounded-xl bg-white font-bold text-slate-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-500 mb-1 font-bold">Known Allergies</label>
+                    <input
+                      type="text"
+                      value={user.allergies}
+                      onChange={(e) => setUser({ ...user, allergies: e.target.value })}
+                      className="w-full p-2.5 border rounded-xl bg-white font-bold text-slate-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-500 mb-1 font-bold">Emergency Contact</label>
+                    <input
+                      type="text"
+                      value={user.emergencyContact}
+                      onChange={(e) => setUser({ ...user, emergencyContact: e.target.value })}
+                      className="w-full p-2.5 border rounded-xl bg-white font-bold text-slate-900"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button type="submit" className="bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs px-6 py-2.5 rounded-xl transition cursor-pointer shadow-2xs">
+                    Save Profile Changes
+                  </button>
+                </div>
+              </form>
             </div>
           )}
         </main>
