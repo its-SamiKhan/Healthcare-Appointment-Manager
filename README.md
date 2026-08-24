@@ -39,7 +39,7 @@ sequenceDiagram
 | Slot Hold Mechanism | 5-minute exclusive hold with auto-expiry |
 | AI Pre-Visit Summary | Gemini 2.5 Flash — urgency, chief complaint, doctor questions |
 | AI Post-Visit Summary | Patient-friendly language conversion |
-| Email Notifications | Resend — 6 email types with retry queue |
+| Email Notifications | SendGrid / Gmail SMTP / Resend — Multi-provider delivery with retry queue |
 | Google Calendar Sync | OAuth 2.0 — create/update/delete events |
 | Medication Reminders | Auto-generated per prescription, sent by cron |
 | Doctor Leave Management | Cascade cancel + notify + calendar delete |
