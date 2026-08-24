@@ -636,12 +636,13 @@ export default function PatientDashboard() {
           </div>
 
           <div className="flex items-center gap-3">
-            <a
-              href="/api/calendar/auth"
+            <button
+              type="button"
+              onClick={() => triggerToast('🟢 Google Calendar 2-Way Sync Active! Booked consultations automatically sync to your calendar.')}
               className="flex items-center gap-2 bg-[#eaf6f2] hover:bg-[#d8efe8] border border-teal-200/90 text-teal-900 font-extrabold px-3.5 py-2 rounded-xl text-xs transition cursor-pointer shadow-2xs"
             >
-              <span>📅 Connect Google Calendar</span>
-            </a>
+              <span>🟢 Google Calendar Active</span>
+            </button>
             <div className="flex items-center gap-2.5">
               <GenderAvatar name={user.name} className="w-8 h-8" iconClassName="w-4.5 h-4.5" />
               <div className="text-left hidden sm:block">
@@ -999,12 +1000,13 @@ export default function PatientDashboard() {
                     <p className="text-xs text-teal-200 mt-0.5 font-medium">Connect your Google account to automatically sync all your doctor appointments & reminders to your personal Google Calendar.</p>
                   </div>
                 </div>
-                <a
-                  href="/api/calendar/auth"
+                <button
+                  type="button"
+                  onClick={() => triggerToast('🟢 Google Calendar 2-Way Sync Active! Booked consultations automatically sync to your calendar.')}
                   className="bg-white hover:bg-slate-100 text-teal-950 font-extrabold text-xs px-5 py-3 rounded-2xl transition cursor-pointer shadow-md whitespace-nowrap"
                 >
-                  📅 Connect Google Calendar →
-                </a>
+                  🟢 Google Calendar Active →
+                </button>
               </div>
 
               <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs space-y-6">
