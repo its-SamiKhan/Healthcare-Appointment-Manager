@@ -822,7 +822,13 @@ export default function PatientDashboard() {
                       return (
                         <div
                           key={doc.id}
-                          onClick={() => setSelectedDoctor(doc)}
+                          onClick={() => {
+                            setSelectedDoctor(doc)
+                            const slotPicker = document.getElementById('booking-slot-picker')
+                            if (slotPicker) {
+                              slotPicker.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+                            }
+                          }}
                           className={`p-5 rounded-3xl border transition flex items-center justify-between gap-4 cursor-pointer bg-white ${
                             isSelected
                               ? 'border-teal-600 ring-2 ring-teal-500/20 shadow-md'
@@ -847,11 +853,20 @@ export default function PatientDashboard() {
                             </div>
                           </div>
 
-                          <div className="text-right space-y-1">
+                          <div className="text-right space-y-1 flex flex-col items-end">
                             <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Next Available</p>
                             <p className="text-xs font-extrabold text-emerald-600">{doc.nextAvailable}</p>
-                            <p className="text-xs font-bold text-slate-900 mt-1">Fee: ₹{doc.fee}</p>
-                            <span className="text-slate-400 font-bold text-sm block pt-1">›</span>
+                            <p className="text-xs font-bold text-slate-900">Fee: ₹{doc.fee}</p>
+                            <button
+                              type="button"
+                              className={`mt-1 px-3 py-1.5 rounded-xl font-extrabold text-xs transition cursor-pointer ${
+                                isSelected
+                                  ? 'bg-teal-700 text-white shadow-2xs'
+                                  : 'bg-teal-50 text-teal-900 hover:bg-teal-100'
+                              }`}
+                            >
+                              {isSelected ? '✓ Selected' : 'Book Slots →'}
+                            </button>
                           </div>
                         </div>
                       )
@@ -903,7 +918,7 @@ export default function PatientDashboard() {
                 </div>
 
                 {/* Right 4 Columns: Selected Doctor Booking Panel */}
-                <div className="lg:col-span-4 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs space-y-6 sticky top-24">
+                <div id="booking-slot-picker" className="lg:col-span-4 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs space-y-6 sticky top-24 self-start">
                   {/* Selected Doctor Summary */}
                   <div className="text-center space-y-2 pb-4 border-b border-slate-100">
                     <GenderAvatar name={selectedDoctor.name} className="w-16 h-16 mx-auto" iconClassName="w-8 h-8" />
