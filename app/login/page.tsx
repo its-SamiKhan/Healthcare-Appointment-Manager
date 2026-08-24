@@ -59,6 +59,8 @@ export default function LoginPage({ initialMode = 'login' }: LoginPageProps) {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  const [activePortal, setActivePortal] = useState<'PATIENT' | 'DOCTOR' | 'ADMIN'>('PATIENT')
+
   // Listen to browser Back / Forward buttons
   useEffect(() => {
     const handlePopState = () => {
@@ -162,7 +164,7 @@ export default function LoginPage({ initialMode = 'login' }: LoginPageProps) {
               </div>
 
               {/* Quick Test Accounts */}
-              <div className="mb-4 bg-slate-50/90 border border-slate-200/90 rounded-2xl p-3.5 sm:p-4 shadow-2xs">
+              <div className="mb-3 bg-slate-50/90 border border-slate-200/90 rounded-2xl p-3.5 sm:p-4 shadow-2xs">
                 <p className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 text-center">
                   🔑 Quick Demo Login (Click to Auto-fill)
                 </p>
@@ -171,7 +173,10 @@ export default function LoginPage({ initialMode = 'login' }: LoginPageProps) {
                     <button
                       key={acc.role}
                       type="button"
-                      onClick={() => handleQuickLogin(acc.email, acc.password)}
+                      onClick={() => {
+                        setActivePortal(acc.role.toUpperCase() as 'PATIENT' | 'DOCTOR' | 'ADMIN')
+                        handleQuickLogin(acc.email, acc.password)
+                      }}
                       className={`py-1.5 px-2 border rounded-xl text-xs font-bold transition text-center shadow-xs ${acc.color}`}
                     >
                       {acc.badge}
@@ -181,6 +186,31 @@ export default function LoginPage({ initialMode = 'login' }: LoginPageProps) {
                 <p className="text-[10px] text-slate-400 text-center mt-1.5 font-medium">
                   Password: <code className="font-mono text-slate-700 font-bold">MediCare#Secure2026!</code>
                 </p>
+              </div>
+
+              {/* Pill-Shaped Portal Selector Switch */}
+              <div className="mb-4 bg-slate-100 p-1.5 rounded-full flex items-center justify-between border border-slate-200/90 shadow-2xs">
+                {[
+                  { role: 'PATIENT', label: '🏥 Patient Portal', email: 'patient@example.com' },
+                  { role: 'DOCTOR', label: '👨‍⚕️ Doctor Portal', email: 'ananya.sharma@healthcare.com' },
+                  { role: 'ADMIN', label: '⚡ Admin Portal', email: 'admin@healthcare.com' },
+                ].map((p) => (
+                  <button
+                    key={p.role}
+                    type="button"
+                    onClick={() => {
+                      setActivePortal(p.role as 'PATIENT' | 'DOCTOR' | 'ADMIN')
+                      handleQuickLogin(p.email, 'MediCare#Secure2026!')
+                    }}
+                    className={`flex-1 py-1.5 px-2 rounded-full text-[10px] sm:text-[11px] font-extrabold transition-all duration-200 text-center cursor-pointer ${
+                      activePortal === p.role
+                        ? 'bg-teal-700 text-white shadow-md scale-[1.02]'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
               </div>
 
               {/* Form */}
