@@ -4,12 +4,12 @@ import { Resend } from 'resend'
 import { prisma } from '@/lib/prisma'
 import { NotificationType, NotificationStatus, Prisma } from '@prisma/client'
 
-const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || ''
-const SENDGRID_FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || process.env.FROM_EMAIL || ''
 const GMAIL_USER = process.env.GMAIL_USER || ''
 const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD || ''
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || ''
+const SENDGRID_FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || process.env.FROM_EMAIL || ''
 const RESEND_API_KEY = process.env.RESEND_API_KEY || ''
-const FROM_EMAIL = process.env.FROM_EMAIL || 'onboarding@resend.dev'
+const FROM_EMAIL = process.env.FROM_EMAIL || GMAIL_USER || 'onboarding@resend.dev'
 const APP_NAME = 'HealthCare Manager'
 
 if (SENDGRID_API_KEY) {
@@ -64,15 +64,12 @@ async function sendEmail(params: {
   })
 
   try {
-    // 1. Send via SendGrid API if SENDGRID_API_KEY is configured
-    if (SENDGRID_API_KEY) {
-      const fromAddress = SENDGRID_FROM_EMAIL || 'noreply@healthcare-app.com'
-      await sgMail.send({
+    // 1. Send via Gmail SMTP if GMAIL_USER & GMAIL_APP_PASSWORD are configured (Priority 1)
+    const transporter = getNodemailer()
+    if (transporter) {
+      await transporter.sendMail({
+        from: `"${APP_NAME}" <${GMAIL_USER}>`,
         to: params.to,
-        from: {
-          email: fromAddress,
-          name: APP_NAME,
-        },
         subject: params.subject,
         html: params.html,
       })
@@ -84,12 +81,15 @@ async function sendEmail(params: {
       return
     }
 
-    // 2. Send via Gmail SMTP if configured
-    const transporter = getNodemailer()
-    if (transporter) {
-      await transporter.sendMail({
-        from: `"${APP_NAME}" <${GMAIL_USER}>`,
+    // 2. Send via SendGrid API if SENDGRID_API_KEY is configured
+    if (SENDGRID_API_KEY) {
+      const fromAddress = SENDGRID_FROM_EMAIL || 'noreply@healthcare-app.com'
+      await sgMail.send({
         to: params.to,
+        from: {
+          email: fromAddress,
+          name: APP_NAME,
+        },
         subject: params.subject,
         html: params.html,
       })
