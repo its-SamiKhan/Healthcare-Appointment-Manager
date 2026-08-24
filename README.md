@@ -5,7 +5,7 @@ A production-grade healthcare appointment booking and follow-up platform built w
 ---
 
 ## 🌐 Live Hosted Application
-- **Live Demo URL**: [https://healthcare-appointment-manager-three.vercel.app](https://healthcare-appointment-manager-three.vercel.app)
+- **Live Demo URL**: [https://healthcare-appointment-manager-silk.vercel.app/](https://healthcare-appointment-manager-silk.vercel.app/)
 - **System Design Document**: [`SYSTEM_DESIGN.md`](SYSTEM_DESIGN.md)
 
 ---
