@@ -551,8 +551,8 @@ export default function PatientDashboard() {
         {/* Top Header Bar */}
         <header className="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between sticky top-0 z-10">
           <div>
-            <h2 className="text-lg font-bold text-slate-900">
-              Good morning, {user.name.split(' ')[0]} 👋
+            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              Welcome back, {user.name.split(' ')[0]}
             </h2>
             <p className="text-xs text-slate-400 font-medium">Take charge of your health today.</p>
           </div>

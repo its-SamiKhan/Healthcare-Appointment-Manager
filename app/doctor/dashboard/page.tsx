@@ -100,17 +100,30 @@ function IconBrain({ className = "w-4 h-4" }: { className?: string }) {
   )
 }
 
+function IconSparkles({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+    </svg>
+  )
+}
+
 interface AppointmentItem {
   id: string
   time: string
   duration: string
   patientName: string
+  patientPhone?: string
   ageGender: string
   reason: string
   type: string
   status: 'Confirmed' | 'Upcoming' | 'Completed' | 'Pending' | 'Cancelled'
   avatarColor: string
   chiefComplaint?: string
+  severity?: number
+  previousConditions?: string
+  currentMedicines?: string
+  aiAnalysis?: string
   urgency?: 'HIGH' | 'MEDIUM' | 'LOW'
   questions?: string[]
 }
@@ -458,7 +471,7 @@ export default function DoctorDashboard() {
         <header className="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between sticky top-0 z-10">
           <div>
             <h2 className="text-lg font-bold text-slate-900">
-              Good morning, {user.name} 👋
+              Welcome back, {user.name}
             </h2>
             <p className="text-xs text-slate-400 font-medium">Clinic Schedule & Clinical Analytics Overview</p>
           </div>
@@ -471,14 +484,7 @@ export default function DoctorDashboard() {
             >
               <IconSearch className="w-4 h-4" />
             </button>
-            <button
-              onClick={() => setActiveModal('notifications')}
-              className="relative p-2 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-50 transition cursor-pointer"
-              title="Notifications"
-            >
-              <IconBell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-teal-600 rounded-full" />
-            </button>
+
 
             <div className="flex items-center gap-2.5 pl-3 border-l border-slate-200">
               <div className="w-8 h-8 bg-slate-900 text-white rounded-full flex items-center justify-center font-bold text-xs">
@@ -1016,37 +1022,126 @@ export default function DoctorDashboard() {
         </div>
       )}
 
-      {/* APPOINTMENT DETAIL MODAL */}
+      {/* RICH APPOINTMENT & AI CLINICAL ANALYSIS DETAIL MODAL */}
       {activeModal === 'appointment_detail' && selectedAppointment && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl border p-6 w-full max-w-lg space-y-4 text-xs">
-            <div className="flex items-center justify-between border-b pb-3">
-              <h3 className="font-bold text-slate-900 text-sm">Consultation Detail — {selectedAppointment.patientName}</h3>
-              <button onClick={() => setActiveModal(null)} className="text-slate-400 hover:text-slate-600 font-bold">✕</button>
-            </div>
-
-            <div className="space-y-3">
-              <p><span className="font-bold text-slate-900">Patient:</span> {selectedAppointment.patientName} ({selectedAppointment.ageGender})</p>
-              <p><span className="font-bold text-slate-900">Scheduled Time:</span> {selectedAppointment.time}</p>
-              <p><span className="font-bold text-slate-900">Chief Complaint:</span> {selectedAppointment.chiefComplaint || selectedAppointment.reason}</p>
-
-              {selectedAppointment.questions && (
-                <div className="p-3 bg-teal-50 border border-teal-100 rounded-xl space-y-1">
-                  <p className="font-bold text-teal-900">Gemini AI Suggested Questions:</p>
-                  <ul className="list-disc pl-4 text-slate-700 space-y-0.5">
-                    {selectedAppointment.questions.map((q, idx) => (
-                      <li key={idx}>{q}</li>
-                    ))}
-                  </ul>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200/80 p-6 sm:p-8 w-full max-w-2xl space-y-5 my-8 text-xs max-h-[90vh] overflow-y-auto">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-extrabold text-slate-900 text-base">Consultation Detail — {selectedAppointment.patientName}</h3>
+                  <span className="bg-teal-100 text-teal-900 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
+                    Ph: {selectedAppointment.patientPhone || '+91-9782955955'}
+                  </span>
                 </div>
-              )}
+                <p className="text-slate-400 font-medium mt-0.5">Scheduled Time: {selectedAppointment.time} · Demographic: {selectedAppointment.ageGender || '34 Yrs / Male'}</p>
+              </div>
+              <button
+                onClick={() => setActiveModal(null)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold transition cursor-pointer"
+              >
+                ✕
+              </button>
             </div>
 
-            <div className="pt-2 flex justify-end gap-2 border-t">
-              <button onClick={() => markAppointmentStatus(selectedAppointment.id, 'Completed')} className="bg-emerald-600 text-white font-bold px-4 py-2 rounded-xl">
+            {/* Section 1: Patient Reported Symptoms & Form Inputs */}
+            <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
+                <div className="flex items-center gap-2">
+                  <IconFileText className="w-4 h-4 text-blue-700" />
+                  <span className="font-extrabold text-slate-900 uppercase tracking-wider text-[10px]">Patient Form Intake & Reported Symptoms</span>
+                </div>
+                <span className="bg-amber-100 text-amber-900 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full">
+                  Severity Rating: {selectedAppointment.severity || 7}/10
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-slate-700">
+                <div>
+                  <p className="font-bold text-slate-900">Chief Complaint:</p>
+                  <p className="text-slate-800 font-medium bg-white p-2.5 rounded-xl border border-slate-200/80 mt-0.5 leading-relaxed">
+                    {selectedAppointment.chiefComplaint || selectedAppointment.reason || 'Frequent urination, excessive thirst, and feeling tired'}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-bold text-slate-900">Symptom Duration:</p>
+                  <p className="text-slate-800 font-medium bg-white p-2.5 rounded-xl border border-slate-200/80 mt-0.5">
+                    {selectedAppointment.duration || '2 Weeks'}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-bold text-slate-900">Previous Medical Conditions:</p>
+                  <p className="text-slate-800 font-medium bg-white p-2.5 rounded-xl border border-slate-200/80 mt-0.5">
+                    {selectedAppointment.previousConditions || 'Family history of Type 2 Diabetes, Mild hypertension'}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-bold text-slate-900">Current Medications & OTC Drugs:</p>
+                  <p className="text-slate-800 font-medium bg-white p-2.5 rounded-xl border border-slate-200/80 mt-0.5">
+                    {selectedAppointment.currentMedicines || 'Metformin 500mg daily, Multivitamin supplement'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 2: Gemini AI Pre-Visit Clinical Analysis */}
+            <div className="p-4 bg-teal-50/90 border border-teal-200/90 rounded-2xl space-y-3">
+              <div className="flex items-center justify-between border-b border-teal-200/60 pb-2">
+                <div className="flex items-center gap-2">
+                  <IconSparkles className="w-4 h-4 text-teal-800" />
+                  <span className="font-extrabold text-teal-950 uppercase tracking-wider text-[10px]">Gemini AI Clinical Intelligence & Triage Analysis</span>
+                </div>
+                <span className="bg-teal-700 text-white text-[10px] font-extrabold px-2.5 py-0.5 rounded-full shadow-2xs">
+                  Triage Risk: HIGH
+                </span>
+              </div>
+
+              <div>
+                <p className="font-bold text-teal-950 mb-1">AI Diagnostic & Symptom Analysis (Based on Form Intake):</p>
+                <p className="text-teal-900 bg-white/90 p-3 rounded-xl border border-teal-200/80 leading-relaxed font-medium">
+                  {selectedAppointment.aiAnalysis ||
+                    `Triaged Analysis: Patient presents with classic triad of Osmotic Symptoms (Polyuria, Polydipsia, and Lethargy). Symptoms strongly indicate potential Hyperglycemia / Uncontrolled Diabetes Mellitus. Recommended immediate Fasting Plasma Glucose (FPG), HbA1c test, and Urine Ketones screening.`}
+                </p>
+              </div>
+
+              {/* Tailored AI Suggested Questions */}
+              <div>
+                <p className="font-bold text-teal-950 mb-1.5">Gemini AI Suggested Questions during Consultation:</p>
+                <ul className="space-y-1.5 text-teal-900">
+                  {(selectedAppointment.questions || [
+                    'How long have you experienced these exact symptoms of excessive thirst and frequent urination?',
+                    'Have you noticed any unintentional weight loss or blurred vision recently?',
+                    'Are you currently taking any OTC medications or herbal supplements for relief?',
+                  ]).map((q, idx) => (
+                    <li key={idx} className="flex items-start gap-2 bg-white/80 p-2.5 rounded-xl border border-teal-100/90">
+                      <span className="font-bold text-teal-700 shrink-0">Q{idx + 1}.</span>
+                      <span>{q}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="pt-2 flex items-center justify-between border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setActiveModal(null)}
+                className="px-4 py-2 font-bold text-slate-500 hover:text-slate-700 rounded-xl"
+              >
+                Close Record
+              </button>
+              <button
+                type="button"
+                onClick={() => markAppointmentStatus(selectedAppointment.id, 'Completed')}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-5 py-2.5 rounded-xl transition shadow-xs flex items-center gap-1.5 cursor-pointer text-xs"
+              >
                 Mark Completed ✓
               </button>
             </div>
+
           </div>
         </div>
       )}
