@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { GenderAvatar } from '@/components/gender-avatar'
 
 // ── Minimalist Rich SVG Icon Components ──
 function IconDashboard({ className = "w-4 h-4" }: { className?: string }) {
@@ -890,9 +891,7 @@ export default function AdminDashboard() {
                   <div key={doc.id} className="p-5 rounded-2xl border border-slate-200 space-y-3 bg-white shadow-2xs">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-teal-100 text-teal-800 rounded-full flex items-center justify-center font-extrabold text-xs">
-                          {doc.name.charAt(4) || 'D'}
-                        </div>
+                        <GenderAvatar name={doc.name} className="w-10 h-10" iconClassName="w-5 h-5" />
                         <div>
                           <h4 className="font-bold text-slate-900 text-xs">{doc.name}</h4>
                           <p className="text-[10px] text-slate-500 font-medium">{doc.specialization}</p>
@@ -922,9 +921,7 @@ export default function AdminDashboard() {
                   <div key={p.id} className="p-5 rounded-2xl border border-slate-200 space-y-3 bg-white shadow-2xs">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 bg-purple-100 text-purple-800 rounded-full flex items-center justify-center font-extrabold text-xs">
-                          {p.name.charAt(0)}
-                        </div>
+                        <GenderAvatar name={p.name} className="w-9 h-9" iconClassName="w-4.5 h-4.5" />
                         <div>
                           <h4 className="font-bold text-slate-900 text-xs">{p.name}</h4>
                           <p className="text-[10px] text-slate-400 font-medium">{p.email}</p>

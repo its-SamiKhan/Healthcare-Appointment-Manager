@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { GenderAvatar } from '@/components/gender-avatar'
 
 interface Slot {
   startTime: string
@@ -136,9 +137,7 @@ export default function DoctorProfilePage() {
         {/* Doctor Profile */}
         <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
           <div className="flex items-start gap-4">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-2xl">
-              {doctor.user.name.charAt(0)}
-            </div>
+            <GenderAvatar name={doctor.user.name} className="w-16 h-16" iconClassName="w-8 h-8" />
             <div>
               <h1 className="text-xl font-bold text-gray-900">Dr. {doctor.user.name}</h1>
               <p className="text-blue-600 font-medium">{doctor.specialization}</p>
@@ -170,25 +169,33 @@ export default function DoctorProfilePage() {
             ) : slots.length === 0 ? (
               <p className="text-center text-gray-400 py-8">No available slots for this date</p>
             ) : (
-              <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mb-6">
-                {slots.map((slot) => (
-                  <button
-                    key={slot.startTime}
-                    disabled={slot.status !== 'AVAILABLE'}
-                    onClick={() => setSelectedSlot(slot)}
-                    className={`py-2 px-3 rounded-lg text-xs font-medium transition ${
-                      slot.status === 'AVAILABLE'
-                        ? selectedSlot?.startTime === slot.startTime
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
-                        : slot.status === 'HOLD'
-                        ? 'bg-yellow-50 text-yellow-600 cursor-not-allowed'
-                        : 'bg-gray-100 text-gray-400 cursor-not-allowed line-through'
-                    }`}
-                  >
-                    {slot.startTime}
-                  </button>
-                ))}
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 mb-6">
+                {slots.map((slot) => {
+                  const isOccupied = slot.status !== 'AVAILABLE'
+                  return (
+                    <button
+                      key={slot.startTime}
+                      disabled={isOccupied}
+                      onClick={() => setSelectedSlot(slot)}
+                      className={`py-2 px-2 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center gap-0.5 ${
+                        slot.status === 'AVAILABLE'
+                          ? selectedSlot?.startTime === slot.startTime
+                            ? 'bg-blue-600 text-white shadow-xs'
+                            : 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-100 cursor-pointer'
+                          : slot.status === 'HOLD'
+                          ? 'bg-amber-50 text-amber-700 border border-amber-200 cursor-not-allowed opacity-80'
+                          : 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed opacity-80'
+                      }`}
+                    >
+                      <span className={isOccupied ? 'line-through' : ''}>{slot.startTime}</span>
+                      {isOccupied && (
+                        <span className="text-[9px] font-extrabold uppercase bg-slate-200/90 text-slate-600 px-1 py-0.2 rounded-xs">
+                          {slot.status === 'HOLD' ? 'Reserved' : 'Occupied'}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
               </div>
             )}
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { GenderAvatar } from '@/components/gender-avatar'
 
 const SPECIALIZATIONS = [
   'All', 'Cardiology', 'Dermatology', 'Orthopedics', 'General Physician',
@@ -84,9 +85,7 @@ export default function PatientDoctorsPage() {
                 className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition hover:border-blue-200 border border-transparent"
               >
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg flex-shrink-0">
-                    {doctor.user.name.charAt(0)}
-                  </div>
+                  <GenderAvatar name={doctor.user.name} className="w-12 h-12" iconClassName="w-6 h-6" />
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-gray-900 truncate">Dr. {doctor.user.name}</h3>
                     <p className="text-sm text-blue-600 font-medium">{doctor.specialization}</p>

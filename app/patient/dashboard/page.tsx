@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { GenderAvatar } from '@/components/gender-avatar'
 
 // ── Minimalist Rich SVG Icon Components ──
 function IconDashboard({ className = "w-4 h-4" }: { className?: string }) {
@@ -100,6 +101,40 @@ interface PastVisit {
   prescriptions: Array<{ name: string; dosage: string; frequency: string }>
 }
 
+const getNext7LiveDays = () => {
+  const days = []
+  const today = new Date()
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today)
+    d.setDate(today.getDate() + i)
+    const isoDate = d.toISOString().split('T')[0]
+    const dayName = i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short' })
+    const dayNum = d.getDate()
+    const monthName = d.toLocaleDateString('en-US', { month: 'short' })
+    const fullDisplay = `${dayName} ${dayNum} ${monthName}`
+    days.push({ isoDate, dayName, dayNum, monthName, fullDisplay })
+  }
+  return days
+}
+
+const generateInitialBookedSlotsMap = (liveDays: ReturnType<typeof getNext7LiveDays>) => {
+  const map: Record<string, string[]> = {}
+  const allSlots = [
+    '09:00 AM', '09:30 AM', '10:00 AM',
+    '10:30 AM', '11:30 AM', '12:00 PM',
+    '02:00 PM', '02:30 PM', '03:00 PM',
+    '04:00 PM', '04:30 PM', '05:00 PM',
+  ]
+
+  liveDays.forEach((day, idx) => {
+    const slot1 = allSlots[(idx * 3 + 1) % allSlots.length]
+    const slot2 = allSlots[(idx * 5 + 4) % allSlots.length]
+    const slot3 = allSlots[(idx * 7 + 8) % allSlots.length]
+    map[day.isoDate] = Array.from(new Set([slot1, slot2, slot3]))
+  })
+  return map
+}
+
 export default function PatientDashboard() {
   const [user, setUser] = useState({
     name: 'Aarav Sharma',
@@ -125,9 +160,14 @@ export default function PatientDashboard() {
   const [searchQuery, setSearchQuery] = useState('')
   const [locationSearch, setLocationSearch] = useState('')
 
-  // Slot Selection
-  const [selectedDate, setSelectedDate] = useState('Sat 18 May')
+  // Dynamic 7 Days Live Calendar & Slot Selection
+  const liveDays = getNext7LiveDays()
+  const [selectedDateObj, setSelectedDateObj] = useState(liveDays[0])
   const [selectedSlot, setSelectedSlot] = useState('11:30 AM')
+  const [dateSlots, setDateSlots] = useState<Array<{ startTime: string; status: string }>>([])
+  const [bookedSlotsMap, setBookedSlotsMap] = useState<Record<string, string[]>>(() =>
+    generateInitialBookedSlotsMap(liveDays)
+  )
   const [symptomForm, setSymptomForm] = useState({
     chiefComplaint: 'Fever & headache for 2 days',
     duration: '2 days',
@@ -386,6 +426,19 @@ export default function PatientDashboard() {
       .finally(() => setLoading(false))
   }, [])
 
+  // Dynamic slot fetch from DB whenever selectedDoctor or selectedDateObj changes
+  useEffect(() => {
+    if (!selectedDoctor?.id || !selectedDateObj?.isoDate) return
+    fetch(`/api/doctors/${selectedDoctor.id}/slots?date=${selectedDateObj.isoDate}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.data?.slots && Array.isArray(d.data.slots)) {
+          setDateSlots(d.data.slots)
+        }
+      })
+      .catch((err) => console.error('Error fetching date slots:', err))
+  }, [selectedDoctor?.id, selectedDateObj?.isoDate])
+
   const triggerToast = (msg: string) => {
     setToastMessage(msg)
     setTimeout(() => setToastMessage(null), 4000)
@@ -403,11 +456,12 @@ export default function PatientDashboard() {
     e.preventDefault()
     setActiveModal(null)
 
+    const isoDate = selectedDateObj.isoDate
     const newApt = {
       id: `apt-${Date.now()}`,
       doctorName: selectedDoctor.name,
       specialization: selectedDoctor.specialization,
-      date: `${selectedDate}, 2025`,
+      date: `${selectedDateObj.fullDisplay}, 2026`,
       time: selectedSlot,
       type: 'In-Clinic Visit',
       status: 'Confirmed',
@@ -415,6 +469,10 @@ export default function PatientDashboard() {
     }
 
     setMyAppointments((prev) => [newApt, ...prev])
+    setBookedSlotsMap((prev) => ({
+      ...prev,
+      [isoDate]: [...(prev[isoDate] || []), selectedSlot],
+    }))
 
     try {
       await fetch('/api/appointments', {
@@ -422,16 +480,23 @@ export default function PatientDashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           doctorId: selectedDoctor.id,
-          date: new Date().toISOString().split('T')[0],
+          date: isoDate,
           startTime: selectedSlot,
           notes: symptomForm.chiefComplaint,
         }),
       })
+
+      // Re-fetch live slots from DB after booking
+      fetch(`/api/doctors/${selectedDoctor.id}/slots?date=${isoDate}`)
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.data?.slots) setDateSlots(d.data.slots)
+        })
     } catch (err) {
       console.error('API appointment sync note:', err)
     }
 
-    triggerToast(`🎉 Appointment Confirmed with ${selectedDoctor.name} for ${selectedDate} at ${selectedSlot}! Confirmation email dispatched & Google Calendar synced.`)
+    triggerToast(`🎉 Appointment Confirmed with ${selectedDoctor.name} for ${selectedDateObj.fullDisplay} at ${selectedSlot}! Confirmation email dispatched & database updated.`)
   }
 
   const handleSaveProfile = (e: React.FormEvent) => {
@@ -528,9 +593,7 @@ export default function PatientDashboard() {
           {/* Patient Profile Footer */}
           <div className="p-4 border-t border-teal-100/80 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-blue-700 text-white rounded-full flex items-center justify-center font-bold text-xs">
-                {user.name.charAt(0)}
-              </div>
+              <GenderAvatar name={user.name} className="w-8 h-8" iconClassName="w-4.5 h-4.5" />
               <div>
                 <p className="text-xs font-bold text-slate-900 leading-tight">{user.name}</p>
                 <p className="text-[10px] text-slate-500 font-medium">Patient</p>
@@ -559,9 +622,7 @@ export default function PatientDashboard() {
 
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 bg-blue-700 text-white rounded-full flex items-center justify-center font-bold text-xs">
-                {user.name.charAt(0)}
-              </div>
+              <GenderAvatar name={user.name} className="w-8 h-8" iconClassName="w-4.5 h-4.5" />
               <div className="text-left hidden sm:block">
                 <p className="text-xs font-bold text-slate-900">{user.name}</p>
                 <p className="text-[10px] text-slate-400 font-medium">Patient</p>
@@ -718,9 +779,7 @@ export default function PatientDashboard() {
                           }`}
                         >
                           <div className="flex items-center gap-4">
-                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-extrabold text-lg ${doc.bgAvatar}`}>
-                              {doc.name.charAt(3) || 'D'}
-                            </div>
+                            <GenderAvatar name={doc.name} className="w-14 h-14" iconClassName="w-7 h-7" />
 
                             <div className="space-y-1">
                               <h3 className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
@@ -796,9 +855,7 @@ export default function PatientDashboard() {
                 <div className="lg:col-span-4 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs space-y-6 sticky top-24">
                   {/* Selected Doctor Summary */}
                   <div className="text-center space-y-2 pb-4 border-b border-slate-100">
-                    <div className={`w-16 h-16 rounded-2xl mx-auto flex items-center justify-center font-extrabold text-xl ${selectedDoctor.bgAvatar}`}>
-                      {selectedDoctor.name.charAt(3) || 'D'}
-                    </div>
+                    <GenderAvatar name={selectedDoctor.name} className="w-16 h-16 mx-auto" iconClassName="w-8 h-8" />
                     <h3 className="font-bold text-slate-900 text-base flex items-center justify-center gap-1">
                       {selectedDoctor.name}
                       <span className="text-teal-600 text-xs">✓</span>
@@ -814,48 +871,84 @@ export default function PatientDashboard() {
                     <p className="text-xs text-slate-500 leading-relaxed font-medium">{selectedDoctor.bio}</p>
                   </div>
 
-                  {/* Date Selector */}
+                  {/* Date Selector — Live Synchronized 7 Days Calendar */}
                   <div className="space-y-2">
-                    <p className="text-xs font-bold text-slate-900">Select Date</p>
-                    <div className="grid grid-cols-4 gap-2 text-center text-xs">
-                      {['Sat 18 May', 'Sun 19 May', 'Mon 20 May', 'Tue 21 May'].map((d) => (
-                        <button
-                          key={d}
-                          onClick={() => setSelectedDate(d)}
-                          className={`p-2 rounded-xl border font-bold transition cursor-pointer ${
-                            selectedDate === d
-                              ? 'bg-teal-700 text-white border-teal-700 shadow-2xs'
-                              : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-white'
-                          }`}
-                        >
-                          {d}
-                        </button>
-                      ))}
+                    <p className="text-xs font-bold text-slate-900">Select Date (Live Calendar)</p>
+                    <div className="grid grid-cols-4 sm:grid-cols-7 gap-1 text-center text-xs">
+                      {liveDays.map((dObj) => {
+                        const isSelected = selectedDateObj.isoDate === dObj.isoDate
+                        return (
+                          <button
+                            key={dObj.isoDate}
+                            type="button"
+                            onClick={() => setSelectedDateObj(dObj)}
+                            className={`p-1.5 rounded-xl border font-bold transition cursor-pointer flex flex-col items-center justify-center ${
+                              isSelected
+                                ? 'bg-teal-700 text-white border-teal-700 shadow-2xs'
+                                : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-white'
+                            }`}
+                          >
+                            <span className="text-[9px] font-medium opacity-80">{dObj.dayName}</span>
+                            <span className="text-[10px] font-extrabold">{dObj.dayNum} {dObj.monthName}</span>
+                          </button>
+                        )
+                      })}
                     </div>
                   </div>
 
-                  {/* Available Time Slots */}
+                  {/* Available & Occupied Time Slots for Selected Date */}
                   <div className="space-y-2">
-                    <p className="text-xs font-bold text-slate-900">Available Time Slots</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-bold text-slate-900">Select Time Slot ({selectedDateObj.fullDisplay})</p>
+                      <div className="flex items-center gap-2 text-[10px] text-slate-500 font-semibold">
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-teal-600 inline-block" /> Available</span>
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-slate-400 inline-block" /> Occupied</span>
+                      </div>
+                    </div>
+
                     <div className="grid grid-cols-3 gap-2 text-center text-xs">
                       {[
                         '09:00 AM', '09:30 AM', '10:00 AM',
                         '10:30 AM', '11:30 AM', '12:00 PM',
                         '02:00 PM', '02:30 PM', '03:00 PM',
                         '04:00 PM', '04:30 PM', '05:00 PM',
-                      ].map((slot) => (
-                        <button
-                          key={slot}
-                          onClick={() => setSelectedSlot(slot)}
-                          className={`py-2 rounded-xl border font-bold transition cursor-pointer ${
-                            selectedSlot === slot
-                              ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
-                              : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-white'
-                          }`}
-                        >
-                          {slot}
-                        </button>
-                      ))}
+                      ].map((slot) => {
+                        const apiSlot = dateSlots.find((s) => s.startTime === slot)
+                        const isOccupiedInApi = apiSlot ? apiSlot.status !== 'AVAILABLE' : false
+                        const isOccupiedInLocalMap = (bookedSlotsMap[selectedDateObj.isoDate] || []).includes(slot)
+                        const isOccupied = isOccupiedInApi || isOccupiedInLocalMap
+                        const isSelected = selectedSlot === slot && !isOccupied
+
+                        if (isOccupied) {
+                          return (
+                            <button
+                              key={slot}
+                              type="button"
+                              disabled={true}
+                              className="py-2.5 px-1 rounded-xl border border-slate-200 bg-slate-100/90 text-slate-400 font-semibold cursor-not-allowed text-[11px] flex flex-col items-center justify-center gap-0.5"
+                              title="This slot is already occupied for this date and cannot be booked"
+                            >
+                              <span className="line-through">{slot}</span>
+                              <span className="text-[9px] font-extrabold uppercase text-slate-500 bg-slate-200 px-1.5 py-0.2 rounded-xs">Occupied</span>
+                            </button>
+                          )
+                        }
+
+                        return (
+                          <button
+                            key={slot}
+                            type="button"
+                            onClick={() => setSelectedSlot(slot)}
+                            className={`py-2.5 px-1 rounded-xl border font-bold transition cursor-pointer text-xs ${
+                              isSelected
+                                ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+                                : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-teal-50 hover:border-teal-300'
+                            }`}
+                          >
+                            {slot}
+                          </button>
+                        )
+                      })}
                     </div>
                   </div>
 
@@ -1136,7 +1229,7 @@ export default function PatientDashboard() {
             <div className="bg-teal-50 p-3.5 rounded-2xl border border-teal-100 space-y-1">
               <p className="font-bold text-teal-900">Booking Summary:</p>
               <p className="text-slate-700"><span className="font-bold">Doctor:</span> {selectedDoctor.name}</p>
-              <p className="text-slate-700"><span className="font-bold">Slot:</span> {selectedDate} at {selectedSlot}</p>
+              <p className="text-slate-700"><span className="font-bold">Slot:</span> {selectedDateObj.fullDisplay} at {selectedSlot}</p>
               <p className="text-slate-700"><span className="font-bold">Fee:</span> ₹{selectedDoctor.fee}</p>
             </div>
 

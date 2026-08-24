@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { GenderAvatar } from '@/components/gender-avatar'
 
 // ── Minimalist Rich SVG Icon Components ──
 function IconDashboard({ className = "w-4 h-4" }: { className?: string }) {
@@ -447,9 +448,7 @@ export default function DoctorDashboard() {
           {/* Doctor Profile Footer */}
           <div className="p-4 border-t border-teal-100/80 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-teal-700 text-white rounded-full flex items-center justify-center font-bold text-xs">
-                {user.name.charAt(3) || 'A'}
-              </div>
+              <GenderAvatar name={user.name} className="w-8 h-8" iconClassName="w-4.5 h-4.5" />
               <div>
                 <p className="text-xs font-bold text-slate-900 leading-tight">{user.name}</p>
                 <p className="text-[10px] text-slate-500 font-medium">{user.specialization}</p>
@@ -487,9 +486,7 @@ export default function DoctorDashboard() {
 
 
             <div className="flex items-center gap-2.5 pl-3 border-l border-slate-200">
-              <div className="w-8 h-8 bg-slate-900 text-white rounded-full flex items-center justify-center font-bold text-xs">
-                {user.name.charAt(3) || 'A'}
-              </div>
+              <GenderAvatar name={user.name} className="w-8 h-8" iconClassName="w-4.5 h-4.5" />
               <div className="text-left hidden sm:block">
                 <p className="text-xs font-bold text-slate-900">{user.name}</p>
                 <p className="text-[10px] text-slate-400 font-medium">{user.specialization}</p>
@@ -613,9 +610,7 @@ export default function DoctorDashboard() {
                       {todaySchedule.map((apt) => (
                         <div key={apt.id} className="py-4 flex items-center justify-between gap-4 hover:bg-slate-50/60 transition rounded-2xl px-2">
                           <div className="flex items-center gap-4">
-                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-xs ${apt.avatarColor}`}>
-                              {apt.patientName.charAt(0)}
-                            </div>
+                            <GenderAvatar name={apt.patientName} gender={apt.ageGender} className="w-12 h-12" iconClassName="w-6 h-6" />
                             <div>
                               <div className="flex items-center gap-2">
                                 <h4 className="font-bold text-slate-900 text-xs">{apt.patientName}</h4>
@@ -784,9 +779,7 @@ export default function DoctorDashboard() {
                   <div key={p.id} className="p-5 rounded-2xl border border-slate-200 hover:border-teal-300 transition space-y-3 bg-white shadow-2xs">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 bg-teal-100 text-teal-800 rounded-full flex items-center justify-center font-extrabold text-xs">
-                          {p.name.charAt(0)}
-                        </div>
+                        <GenderAvatar name={p.name} className="w-9 h-9" iconClassName="w-4.5 h-4.5" />
                         <div>
                           <h4 className="font-bold text-slate-900 text-xs">{p.name}</h4>
                           <p className="text-[10px] text-slate-400 font-medium">{p.phone}</p>
