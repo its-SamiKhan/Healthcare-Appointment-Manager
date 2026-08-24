@@ -1,10 +1,30 @@
+import nodemailer from 'nodemailer'
 import { Resend } from 'resend'
 import { prisma } from '@/lib/prisma'
 import { NotificationType, NotificationStatus, Prisma } from '@prisma/client'
 
+const GMAIL_USER = process.env.GMAIL_USER || ''
+const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD || ''
 const RESEND_API_KEY = process.env.RESEND_API_KEY || ''
-const FROM_EMAIL = process.env.FROM_EMAIL || 'onboarding@resend.dev'
+const FROM_EMAIL = process.env.FROM_EMAIL || GMAIL_USER || 'onboarding@resend.dev'
 const APP_NAME = 'HealthCare Manager'
+
+let _nodemailerTransporter: nodemailer.Transporter | null = null
+function getNodemailer(): nodemailer.Transporter | null {
+  if (GMAIL_USER && GMAIL_APP_PASSWORD) {
+    if (!_nodemailerTransporter) {
+      _nodemailerTransporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: GMAIL_USER,
+          pass: GMAIL_APP_PASSWORD,
+        },
+      })
+    }
+    return _nodemailerTransporter
+  }
+  return null
+}
 
 let _resend: Resend | null = null
 function getResend(): Resend {
@@ -37,6 +57,25 @@ async function sendEmail(params: {
   })
 
   try {
+    const transporter = getNodemailer()
+
+    if (transporter) {
+      // Send via Gmail SMTP (100% FREE, NO DOMAIN REQUIRED, DELIVERS TO ANY RECIPIENT EMAIL WORLDWIDE)
+      await transporter.sendMail({
+        from: `"${APP_NAME}" <${GMAIL_USER}>`,
+        to: params.to,
+        subject: params.subject,
+        html: params.html,
+      })
+
+      await prisma.notificationLog.update({
+        where: { id: log.id },
+        data: { status: NotificationStatus.SENT, attempts: 1 },
+      })
+      return
+    }
+
+    // Fallback to Resend API
     const resend = getResend()
     const response = await resend.emails.send({
       from: `${APP_NAME} <${FROM_EMAIL}>`,
@@ -48,7 +87,6 @@ async function sendEmail(params: {
     if (response.error) {
       console.error(`[EMAIL RESEND API ERROR] ${response.error.name}: ${response.error.message}`)
 
-      // Handle Resend Sandbox restriction (onboarding@resend.dev can only deliver to owner email)
       if (
         response.error.message?.includes('can only send to your own email address') ||
         response.error.message?.includes('testing mode') ||
