@@ -39,3 +39,9 @@ export async function comparePassword(
 ): Promise<boolean> {
   return bcrypt.compare(password, hash)
 }
+
+export function getAuthCookieHeader(token: string): string {
+  const isProd = process.env.NODE_ENV === 'production'
+  const secureFlag = isProd ? '; Secure' : ''
+  return `token=${token}; HttpOnly; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}; Path=/${secureFlag}`
+}

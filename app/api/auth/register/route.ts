@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import prisma from '@/lib/prisma'
-import { hashPassword, signJWT } from '@/lib/auth'
+import { hashPassword, signJWT, getAuthCookieHeader } from '@/lib/auth'
 import { successResponse, errorResponse } from '@/lib/api-response'
 
 const DEFAULT_WORKING_HOURS = {
@@ -87,10 +87,7 @@ export async function POST(request: NextRequest) {
       201
     )
 
-    response.headers.set(
-      'Set-Cookie',
-      `token=${token}; HttpOnly; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}; Path=/`
-    )
+    response.headers.set('Set-Cookie', getAuthCookieHeader(token))
 
     return response
   } catch (error) {

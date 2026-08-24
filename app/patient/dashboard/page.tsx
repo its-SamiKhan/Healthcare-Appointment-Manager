@@ -388,7 +388,19 @@ export default function PatientDashboard() {
   }, [])
 
   useEffect(() => {
-    fetch('/api/auth/me')
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const tokenFromUrl = params.get('token')
+      if (tokenFromUrl) {
+        document.cookie = `token=${tokenFromUrl}; path=/; max-age=604800; SameSite=Lax`
+        localStorage.setItem('token', tokenFromUrl)
+      }
+    }
+
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+
+    fetch('/api/auth/me', { headers })
       .then((r) => r.json())
       .then((d) => {
         if (d.data) {
@@ -400,7 +412,7 @@ export default function PatientDashboard() {
         }
       })
 
-    fetch('/api/doctors')
+    fetch('/api/doctors', { headers })
       .then((r) => r.json())
       .then((d) => {
         if (d.data && Array.isArray(d.data) && d.data.length > 0) {

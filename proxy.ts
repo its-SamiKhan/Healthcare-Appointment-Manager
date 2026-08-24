@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 import { verifyJWT } from '@/lib/auth'
 
 const PUBLIC_ROUTES = ['/', '/login', '/register']
-const PUBLIC_API_PREFIXES = ['/api/auth', '/api/cron']
+const PUBLIC_API_PREFIXES = ['/api/auth', '/api/cron', '/api/doctors']
 
 const ROLE_ROUTE_MAP: Record<string, string[]> = {
   ADMIN: ['/admin', '/api/admin'],

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import { signJWT, hashPassword } from '@/lib/auth'
+import { signJWT, hashPassword, getAuthCookieHeader } from '@/lib/auth'
 
 // GET /api/auth/google/callback
 export async function GET(request: NextRequest) {
@@ -96,13 +96,10 @@ export async function GET(request: NextRequest) {
     })
 
     const roleTarget = user.role.toLowerCase()
-    const redirectUrl = new URL(`/${roleTarget}/dashboard`, baseUrl)
+    const redirectUrl = new URL(`/${roleTarget}/dashboard?token=${token}`, baseUrl)
     const response = NextResponse.redirect(redirectUrl)
 
-    response.headers.set(
-      'Set-Cookie',
-      `token=${token}; HttpOnly; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}; Path=/`
-    )
+    response.headers.set('Set-Cookie', getAuthCookieHeader(token))
 
     return response
   } catch (err) {

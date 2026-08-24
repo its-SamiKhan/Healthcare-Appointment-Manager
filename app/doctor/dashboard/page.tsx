@@ -294,9 +294,21 @@ export default function DoctorDashboard() {
 
   // Fetch real numbers & records from backend API
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const tokenFromUrl = params.get('token')
+      if (tokenFromUrl) {
+        document.cookie = `token=${tokenFromUrl}; path=/; max-age=604800; SameSite=Lax`
+        localStorage.setItem('token', tokenFromUrl)
+      }
+    }
+
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+
     Promise.all([
-      fetch('/api/auth/me').then((r) => r.json()),
-      fetch('/api/doctor/dashboard').then((r) => r.json()),
+      fetch('/api/auth/me', { headers }).then((r) => r.json()),
+      fetch('/api/doctor/dashboard', { headers }).then((r) => r.json()),
     ])
       .then(([meRes, dashRes]) => {
         if (meRes.data) {

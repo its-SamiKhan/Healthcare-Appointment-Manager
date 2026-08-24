@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import prisma from '@/lib/prisma'
-import { comparePassword, signJWT, hashPassword } from '@/lib/auth'
+import { comparePassword, signJWT, hashPassword, getAuthCookieHeader } from '@/lib/auth'
 import { successResponse, errorResponse } from '@/lib/api-response'
 
 export async function POST(request: NextRequest) {
@@ -76,10 +76,7 @@ export async function POST(request: NextRequest) {
       token,
     })
 
-    response.headers.set(
-      'Set-Cookie',
-      `token=${token}; HttpOnly; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}; Path=/`
-    )
+    response.headers.set('Set-Cookie', getAuthCookieHeader(token))
 
     return response
   } catch (error) {
