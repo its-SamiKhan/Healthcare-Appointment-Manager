@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import { signJWT, hashPassword } from '@/lib/auth'
+import { signJWT, hashPassword, verifyJWT } from '@/lib/auth'
 
-// GET /api/calendar/callback — Google OAuth Callback (Handles SSO Login & Calendar Sync)
+// GET /api/calendar/callback — Google OAuth Callback (Connects Google Calendar & SSO Login)
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
@@ -40,51 +40,74 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${origin}/login?error=Failed+to+exchange+Google+token`)
     }
 
-    // 2. Fetch user profile from Google UserInfo endpoint
-    const userinfoRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-      headers: { Authorization: `Bearer ${tokenData.access_token}` },
-    })
+    // 2. Check if user is ALREADY logged in (connecting Google Calendar from dashboard)
+    const cookieToken = request.cookies.get('token')?.value
+    const headerToken = request.headers.get('authorization')?.replace('Bearer ', '')
+    const sessionToken = cookieToken || headerToken
 
-    const googleUser = await userinfoRes.json()
-
-    if (!googleUser.email) {
-      return NextResponse.redirect(`${origin}/login?error=Could+not+retrieve+Google+email`)
+    let currentUserId: string | null = null
+    if (sessionToken) {
+      const payload = await verifyJWT(sessionToken)
+      if (payload) currentUserId = payload.userId
     }
 
-    const email = googleUser.email
-    const name = googleUser.name || email.split('@')[0]
+    let user
 
-    // 3. Find existing user or create new Google User
-    let user = await prisma.user.findUnique({
-      where: { email },
-      include: { doctor: true, patient: true },
-    })
-
-    if (!user) {
-      const dummyPassword = await hashPassword(`google-auth-${Date.now()}-${Math.random()}`)
-      user = await prisma.user.create({
-        data: {
-          name,
-          email,
-          passwordHash: dummyPassword,
-          role: 'PATIENT',
-          googleAccessToken: tokenData.access_token,
-          googleRefreshToken: tokenData.refresh_token || null,
-          patient: {
-            create: {},
-          },
-        },
-        include: { doctor: true, patient: true },
-      })
-    } else {
-      // Update tokens for existing user
-      await prisma.user.update({
-        where: { id: user.id },
+    if (currentUserId) {
+      // Connect Google Calendar tokens directly to the current logged-in user profile!
+      user = await prisma.user.update({
+        where: { id: currentUserId },
         data: {
           googleAccessToken: tokenData.access_token,
           ...(tokenData.refresh_token && { googleRefreshToken: tokenData.refresh_token }),
         },
+        include: { doctor: true, patient: true },
       })
+    } else {
+      // 3. Fetch user profile from Google UserInfo endpoint for SSO login
+      const userinfoRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+        headers: { Authorization: `Bearer ${tokenData.access_token}` },
+      })
+
+      const googleUser = await userinfoRes.json()
+
+      if (!googleUser.email) {
+        return NextResponse.redirect(`${origin}/login?error=Could+not+retrieve+Google+email`)
+      }
+
+      const email = googleUser.email
+      const name = googleUser.name || email.split('@')[0]
+
+      user = await prisma.user.findUnique({
+        where: { email },
+        include: { doctor: true, patient: true },
+      })
+
+      if (!user) {
+        const dummyPassword = await hashPassword(`google-auth-${Date.now()}-${Math.random()}`)
+        user = await prisma.user.create({
+          data: {
+            name,
+            email,
+            passwordHash: dummyPassword,
+            role: 'PATIENT',
+            googleAccessToken: tokenData.access_token,
+            googleRefreshToken: tokenData.refresh_token || null,
+            patient: {
+              create: {},
+            },
+          },
+          include: { doctor: true, patient: true },
+        })
+      } else {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            googleAccessToken: tokenData.access_token,
+            ...(tokenData.refresh_token && { googleRefreshToken: tokenData.refresh_token }),
+          },
+        })
+      }
     }
 
     // 4. Issue JWT auth token cookie
