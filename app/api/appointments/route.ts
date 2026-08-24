@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import prisma from '@/lib/prisma'
+import { verifyJWT } from '@/lib/auth'
 import { successResponse, errorResponse } from '@/lib/api-response'
 import { sendBookingConfirmation } from '@/lib/email'
 import { createCalendarEvent } from '@/lib/google-calendar'
@@ -8,7 +9,21 @@ import { writeAuditLog } from '@/lib/audit'
 // POST /api/appointments — book an appointment (transaction-safe)
 export async function POST(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id')
+    let userId = request.headers.get('x-user-id')
+
+    if (!userId) {
+      const cookieToken = request.cookies.get('token')?.value
+      const headerToken = request.headers.get('authorization')?.replace('Bearer ', '')
+      const { searchParams } = new URL(request.url)
+      const urlToken = searchParams.get('token')
+      const token = cookieToken || headerToken || urlToken
+
+      if (token) {
+        const payload = await verifyJWT(token)
+        if (payload) userId = payload.userId
+      }
+    }
+
     if (!userId) return errorResponse('Unauthorized', 401)
 
     const body = await request.json()

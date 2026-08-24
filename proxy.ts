@@ -12,7 +12,7 @@ const ROLE_ROUTE_MAP: Record<string, string[]> = {
 }
 
 export async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl
+  const { pathname, searchParams } = request.nextUrl
 
   // Allow static assets & image files
   if (
@@ -27,17 +27,27 @@ export async function proxy(request: NextRequest) {
   // Allow public page routes
   if (PUBLIC_ROUTES.includes(pathname)) return NextResponse.next()
 
-  // Allow public API prefixes
+  // Extract token from cookie, Authorization header, or URL query parameter
+  const cookieToken = request.cookies.get('token')?.value
+  const headerToken = request.headers.get('authorization')?.replace('Bearer ', '')
+  const urlToken = searchParams.get('token')
+  const token = cookieToken || headerToken || urlToken
+
+  // Allow public API prefixes (e.g. /api/auth/*, /api/doctors/*)
   if (PUBLIC_API_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
+    if (token) {
+      const payload = await verifyJWT(token)
+      if (payload) {
+        const requestHeaders = new Headers(request.headers)
+        requestHeaders.set('x-user-id', payload.userId)
+        requestHeaders.set('x-user-role', payload.role)
+        requestHeaders.set('x-user-email', payload.email)
+        requestHeaders.set('x-user-name', payload.name)
+        return NextResponse.next({ request: { headers: requestHeaders } })
+      }
+    }
     return NextResponse.next()
   }
-
-  // Extract token from cookie or Authorization header
-  const cookieToken = request.cookies.get('token')?.value
-  const headerToken = request.headers
-    .get('authorization')
-    ?.replace('Bearer ', '')
-  const token = cookieToken || headerToken
 
   if (!token) {
     if (pathname.startsWith('/api')) {
