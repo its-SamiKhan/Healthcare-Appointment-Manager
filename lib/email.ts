@@ -2,15 +2,15 @@ import { Resend } from 'resend'
 import { prisma } from '@/lib/prisma'
 import { NotificationType, NotificationStatus, Prisma } from '@prisma/client'
 
-// Lazy-initialize Resend to avoid build-time errors when env vars are missing
+const RESEND_API_KEY = process.env.RESEND_API_KEY || ''
+const FROM_EMAIL = process.env.FROM_EMAIL || 'onboarding@resend.dev'
+const APP_NAME = 'HealthCare Manager'
+
 let _resend: Resend | null = null
 function getResend(): Resend {
-  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY || 'placeholder')
+  if (!_resend) _resend = new Resend(RESEND_API_KEY || 'placeholder')
   return _resend
 }
-
-const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@healthcare-app.com'
-const APP_NAME = 'HealthCare Manager'
 
 // ─── Retry delay schedule ────────────────────────────────────────────────────
 const RETRY_DELAYS_MS = [5 * 60 * 1000, 15 * 60 * 1000, 30 * 60 * 1000]
@@ -37,19 +37,40 @@ async function sendEmail(params: {
   })
 
   try {
-    await getResend().emails.send({
+    const resend = getResend()
+    const response = await resend.emails.send({
       from: `${APP_NAME} <${FROM_EMAIL}>`,
       to: params.to,
       subject: params.subject,
       html: params.html,
     })
 
-    await prisma.notificationLog.update({
-      where: { id: log.id },
-      data: { status: NotificationStatus.SENT, attempts: 1 },
-    })
+    if (response.error) {
+      console.error(`[EMAIL RESEND API ERROR] ${response.error.name}: ${response.error.message}`)
+
+      // Handle Resend Sandbox restriction (onboarding@resend.dev can only deliver to owner email)
+      if (
+        response.error.message?.includes('can only send to your own email address') ||
+        response.error.message?.includes('testing mode') ||
+        response.error.name === 'validation_error'
+      ) {
+        console.warn(
+          `[RESEND SANDBOX RESTRICTION] Resend free testing domain (${FROM_EMAIL}) restricts direct delivery to unverified recipient (${params.to}). Notification stored in database.`
+        )
+      }
+
+      await prisma.notificationLog.update({
+        where: { id: log.id },
+        data: { status: NotificationStatus.FAILED, attempts: 1 },
+      })
+    } else {
+      await prisma.notificationLog.update({
+        where: { id: log.id },
+        data: { status: NotificationStatus.SENT, attempts: 1 },
+      })
+    }
   } catch (error) {
-    console.error(`[EMAIL] Failed to send ${params.type} to ${params.to}:`, error)
+    console.error(`[EMAIL EXCEPTION] Failed to send ${params.type} to ${params.to}:`, error)
 
     const nextRetryAt = new Date(Date.now() + RETRY_DELAYS_MS[0])
     await prisma.notificationLog.update({
@@ -80,14 +101,14 @@ export async function sendBookingConfirmation(params: {
     subject: `✅ Appointment Confirmed — Dr. ${params.doctorName}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #2563eb;">Appointment Confirmed</h2>
+        <h2 style="color: #0f766e;">Appointment Confirmed</h2>
         <p>Dear <strong>${params.patientName}</strong>,</p>
         <p>Your appointment has been successfully booked.</p>
-        <div style="background: #f0f9ff; border-left: 4px solid #2563eb; padding: 16px; margin: 16px 0; border-radius: 4px;">
-          <p><strong>Doctor:</strong> Dr. ${params.doctorName} (${params.specialization})</p>
-          <p><strong>Date:</strong> ${params.date}</p>
-          <p><strong>Time:</strong> ${params.startTime} – ${params.endTime}</p>
-          <p><strong>Appointment ID:</strong> ${params.appointmentId}</p>
+        <div style="background: #f0fdfa; border-left: 4px solid #0f766e; padding: 16px; margin: 16px 0; border-radius: 8px;">
+          <p style="margin: 4px 0;"><strong>Doctor:</strong> Dr. ${params.doctorName} (${params.specialization})</p>
+          <p style="margin: 4px 0;"><strong>Date:</strong> ${params.date}</p>
+          <p style="margin: 4px 0;"><strong>Time:</strong> ${params.startTime} – ${params.endTime}</p>
+          <p style="margin: 4px 0;"><strong>Appointment ID:</strong> ${params.appointmentId}</p>
         </div>
         <p>Please arrive 10 minutes early. If you need to cancel or reschedule, please do so at least 2 hours before your appointment.</p>
         <p>Best regards,<br/><strong>${APP_NAME}</strong></p>
@@ -114,10 +135,10 @@ export async function sendAppointmentReminder(params: {
         <h2 style="color: #f59e0b;">Appointment Reminder</h2>
         <p>Dear <strong>${params.patientName}</strong>,</p>
         <p>This is a friendly reminder about your upcoming appointment.</p>
-        <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 16px; margin: 16px 0; border-radius: 4px;">
-          <p><strong>Doctor:</strong> Dr. ${params.doctorName}</p>
-          <p><strong>Date:</strong> ${params.date}</p>
-          <p><strong>Time:</strong> ${params.startTime}</p>
+        <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 16px; margin: 16px 0; border-radius: 8px;">
+          <p style="margin: 4px 0;"><strong>Doctor:</strong> Dr. ${params.doctorName}</p>
+          <p style="margin: 4px 0;"><strong>Date:</strong> ${params.date}</p>
+          <p style="margin: 4px 0;"><strong>Time:</strong> ${params.startTime}</p>
         </div>
         <p>Best regards,<br/><strong>${APP_NAME}</strong></p>
       </div>
@@ -143,11 +164,11 @@ export async function sendCancellationEmail(params: {
         <h2 style="color: #dc2626;">Appointment Cancelled</h2>
         <p>Dear <strong>${params.patientName}</strong>,</p>
         <p>Your appointment has been cancelled.</p>
-        <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 16px; margin: 16px 0; border-radius: 4px;">
-          <p><strong>Doctor:</strong> Dr. ${params.doctorName}</p>
-          <p><strong>Date:</strong> ${params.date}</p>
-          <p><strong>Time:</strong> ${params.startTime}</p>
-          ${params.reason ? `<p><strong>Reason:</strong> ${params.reason}</p>` : ''}
+        <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 16px; margin: 16px 0; border-radius: 8px;">
+          <p style="margin: 4px 0;"><strong>Doctor:</strong> Dr. ${params.doctorName}</p>
+          <p style="margin: 4px 0;"><strong>Date:</strong> ${params.date}</p>
+          <p style="margin: 4px 0;"><strong>Time:</strong> ${params.startTime}</p>
+          ${params.reason ? `<p style="margin: 4px 0;"><strong>Reason:</strong> ${params.reason}</p>` : ''}
         </div>
         <p>Please book a new appointment at your convenience.</p>
         <p>Best regards,<br/><strong>${APP_NAME}</strong></p>
@@ -175,10 +196,10 @@ export async function sendRescheduleEmail(params: {
         <h2 style="color: #7c3aed;">Appointment Rescheduled</h2>
         <p>Dear <strong>${params.patientName}</strong>,</p>
         <p>Your appointment has been rescheduled.</p>
-        <div style="background: #f5f3ff; border-left: 4px solid #7c3aed; padding: 16px; margin: 16px 0; border-radius: 4px;">
-          <p><strong>Doctor:</strong> Dr. ${params.doctorName}</p>
-          <p><s>Old time: ${params.oldDate} at ${params.oldTime}</s></p>
-          <p><strong>New time: ${params.newDate} at ${params.newTime}</strong></p>
+        <div style="background: #f5f3ff; border-left: 4px solid #7c3aed; padding: 16px; margin: 16px 0; border-radius: 8px;">
+          <p style="margin: 4px 0;"><strong>Doctor:</strong> Dr. ${params.doctorName}</p>
+          <p style="margin: 4px 0;"><s>Old time: ${params.oldDate} at ${params.oldTime}</s></p>
+          <p style="margin: 4px 0;"><strong>New time: ${params.newDate} at ${params.newTime}</strong></p>
         </div>
         <p>Best regards,<br/><strong>${APP_NAME}</strong></p>
       </div>
@@ -203,8 +224,8 @@ export async function sendLeaveNotification(params: {
         <h2 style="color: #dc2626;">Appointment Cancelled Due to Doctor's Leave</h2>
         <p>Dear <strong>${params.patientName}</strong>,</p>
         <p>We regret to inform you that Dr. <strong>${params.doctorName}</strong> will be on leave, and your appointment has been cancelled.</p>
-        <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 16px; margin: 16px 0; border-radius: 4px;">
-          <p><strong>Cancelled appointment:</strong> ${params.date} at ${params.startTime}</p>
+        <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 16px; margin: 16px 0; border-radius: 8px;">
+          <p style="margin: 4px 0;"><strong>Cancelled appointment:</strong> ${params.date} at ${params.startTime}</p>
         </div>
         <p>We sincerely apologize for the inconvenience. Please book a new appointment with another doctor or wait for Dr. ${params.doctorName}'s return.</p>
         <p>Best regards,<br/><strong>${APP_NAME}</strong></p>
@@ -230,10 +251,10 @@ export async function sendMedicationReminder(params: {
         <h2 style="color: #059669;">Medication Reminder</h2>
         <p>Dear <strong>${params.patientName}</strong>,</p>
         <p>It's time to take your medication.</p>
-        <div style="background: #f0fdf4; border-left: 4px solid #059669; padding: 16px; margin: 16px 0; border-radius: 4px;">
-          <p><strong>Medication:</strong> ${params.drugName}</p>
-          <p><strong>Dosage:</strong> ${params.dosage}</p>
-          <p><strong>Schedule:</strong> ${params.frequency}</p>
+        <div style="background: #f0fdf4; border-left: 4px solid #059669; padding: 16px; margin: 16px 0; border-radius: 8px;">
+          <p style="margin: 4px 0;"><strong>Medication:</strong> ${params.drugName}</p>
+          <p style="margin: 4px 0;"><strong>Dosage:</strong> ${params.dosage}</p>
+          <p style="margin: 4px 0;"><strong>Schedule:</strong> ${params.frequency}</p>
         </div>
         <p>Take care and stay healthy!</p>
         <p>Best regards,<br/><strong>${APP_NAME}</strong></p>
@@ -246,10 +267,6 @@ export async function sendMedicationReminder(params: {
 
 // ─── Retry Worker ─────────────────────────────────────────────────────────────
 
-/**
- * Processes the email retry queue. Called by cron job.
- * Retries failed notifications up to MAX_RETRIES times with exponential backoff.
- */
 export async function processEmailRetryQueue(): Promise<{
   processed: number
   retried: number
