@@ -76,7 +76,7 @@ const COMMON_SYMPTOMS = [
 async function seed() {
   console.log('🚀 Starting Large Indian Healthcare Database Seeding (120+ Doctors, 50+ Patients)...')
 
-  const passwordHash = await hashPassword('Password123!')
+  const passwordHash = await hashPassword('MediCare#Secure2026!')
 
   // 1. Admin Account
   const adminUser = await prisma.user.upsert({

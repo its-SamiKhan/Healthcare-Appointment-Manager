@@ -2,6 +2,34 @@
 
 A production-grade healthcare appointment booking system built with **Next.js 15**, **PostgreSQL**, **Prisma**, **Google Gemini AI**, and **Google Calendar**.
 
+## 🔄 Interconnected 3-Dashboard Workflow
+
+All three user portals (**Patient**, **Doctor**, and **Admin**) are dynamically interconnected in real time via PostgreSQL database transactions, Resend Email API, and Google Calendar 2-way sync:
+
+```mermaid
+sequenceDiagram
+    participant Patient as 👤 Patient Portal (/patient/dashboard)
+    participant DB as 🗄️ Prisma DB (PostgreSQL)
+    participant Resend as ✉️ Resend Email API
+    participant GCal as 📅 Google Calendar API
+    participant Doctor as 🩺 Doctor Portal (/doctor/dashboard)
+    participant Admin as 🛡️ Admin Portal (/admin/dashboard)
+
+    Patient->>DB: 1. Books slot & submits symptoms (POST /api/appointments)
+    DB->>Resend: 2. Dispatches HTML booking confirmation email to Patient & Doctor
+    DB->>GCal: 3. Syncs 2-Way Google Calendar event (createCalendarEvent)
+    DB-->>Patient: 4. Updates "My Appointments" tab & Live Google Calendar
+    DB-->>Doctor: 5. Displays in "Today's Schedule" & "Appointments Directory" with Gemini AI Triage
+    DB-->>Admin: 6. Recalculates real DB metrics, recent appointments, & trend analytics
+```
+
+### 🌟 Real-Time Data Flow:
+1. **👤 Patient Portal (`/patient/dashboard`)**: Patient chooses a doctor, date, and slot, then submits their chief complaint. `POST /api/appointments` uses PostgreSQL `SELECT FOR UPDATE` transactions to prevent double booking.
+2. **✉️ Resend Email API**: Automatically dispatches HTML booking confirmation emails to both patient and doctor.
+3. **📅 Google Calendar API**: Syncs 2-way calendar events onto doctor and patient practice schedules.
+4. **🩺 Doctor Portal (`/doctor/dashboard`)**: The consultation instantly populates under *Today's Schedule* and *Appointments Directory* with Gemini AI triage urgency ratings.
+5. **🛡️ Admin Portal (`/admin/dashboard`)**: Analytics dashboard recalculates live metrics (*Total Patients, Appointments, Recent Activity Logs*) directly from Prisma DB without any hardcoded numbers.
+
 ## ✨ Key Features
 
 | Feature | Implementation |

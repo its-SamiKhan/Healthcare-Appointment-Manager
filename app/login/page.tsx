@@ -18,21 +18,21 @@ const TEST_ACCOUNTS = [
   {
     role: 'Patient',
     email: 'patient@example.com',
-    password: 'Password123!',
+    password: 'MediCare#Secure2026!',
     color: 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100',
     badge: '🏥 Patient',
   },
   {
     role: 'Doctor',
     email: 'ananya.sharma@healthcare.com',
-    password: 'Password123!',
+    password: 'MediCare#Secure2026!',
     color: 'bg-teal-50 text-teal-800 border-teal-200 hover:bg-teal-100',
     badge: '👨‍⚕️ Dr. Ananya',
   },
   {
     role: 'Admin',
     email: 'admin@healthcare.com',
-    password: 'Password123!',
+    password: 'MediCare#Secure2026!',
     color: 'bg-slate-100 text-slate-800 border-slate-300 hover:bg-slate-200',
     badge: '⚡ Admin',
   },
@@ -179,7 +179,7 @@ export default function LoginPage({ initialMode = 'login' }: LoginPageProps) {
                   ))}
                 </div>
                 <p className="text-[10px] text-slate-400 text-center mt-1.5 font-medium">
-                  Password: <code className="font-mono text-slate-700 font-bold">Password123!</code>
+                  Password: <code className="font-mono text-slate-700 font-bold">MediCare#Secure2026!</code>
                 </p>
               </div>
 

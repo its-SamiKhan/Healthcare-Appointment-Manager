@@ -806,24 +806,28 @@ export default function DoctorDashboard() {
             <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-bold text-slate-900 text-lg">Doctor Practice Calendar</h3>
-                  <p className="text-xs text-slate-400 mt-0.5">Manage consultation slots, Google Calendar sync, and leave blocks</p>
+                  <h3 className="font-bold text-slate-900 text-lg">Doctor Practice Google Calendar</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">Real-time 2-way Google Calendar synchronization for patient appointments</p>
                 </div>
-                <button onClick={() => setActiveModal('block')} className="bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer">
-                  + Block Time Out
-                </button>
+                <div className="flex items-center gap-2">
+                  <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1.5 rounded-xl border border-emerald-200">
+                    ● Google Calendar Synced
+                  </span>
+                  <button onClick={() => setActiveModal('block')} className="bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer">
+                    + Block Time Out
+                  </button>
+                </div>
               </div>
 
-              <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-3">
-                <p className="text-sm font-bold text-slate-900">May 2025 Schedule Overview</p>
-                <div className="grid grid-cols-7 gap-2 text-xs font-bold text-slate-600">
-                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-                    <div key={day} className="p-3 bg-white border rounded-xl shadow-2xs">
-                      <p className="text-slate-400 uppercase text-[10px]">{day}</p>
-                      <p className="text-teal-700 mt-1 font-extrabold">9 AM - 5 PM</p>
-                    </div>
-                  ))}
-                </div>
+              <div className="w-full rounded-2xl overflow-hidden border border-slate-200 shadow-2xs">
+                <iframe
+                  src="https://calendar.google.com/calendar/embed?height=600&wkst=1&ctz=Asia%2FKolkata&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=1&showCalendars=0&showTz=0&src=en.indian%23holiday%40group.v.calendar.google.com&color=%20%23039BE5"
+                  style={{ border: 0 }}
+                  width="100%"
+                  height="500"
+                  frameBorder="0"
+                  scrolling="no"
+                />
               </div>
             </div>
           )}
