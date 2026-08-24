@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 // GET /api/auth/google
-export async function GET() {
+export async function GET(request: NextRequest) {
   const clientId = process.env.GOOGLE_CLIENT_ID
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-  const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${baseUrl}/api/calendar/callback`
+  const origin = request.nextUrl.origin // Automatically gets http://localhost:3000 or https://your-vercel-domain.vercel.app
+  const redirectUri = `${origin}/api/calendar/callback`
 
   if (!clientId) {
     return Response.json(

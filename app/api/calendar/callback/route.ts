@@ -1,20 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import { signJWT, hashPassword, verifyJWT } from '@/lib/auth'
+import { signJWT, hashPassword } from '@/lib/auth'
 
 // GET /api/calendar/callback — Google OAuth Callback (Handles SSO Login & Calendar Sync)
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
   const error = searchParams.get('error')
-  const state = searchParams.get('state')
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-  const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${baseUrl}/api/calendar/callback`
+  const origin = request.nextUrl.origin // Dynamically detects http://localhost:3000 or https://...vercel.app
+  const redirectUri = `${origin}/api/calendar/callback`
 
   if (error || !code) {
     console.error('[GOOGLE OAUTH ERROR]', error)
-    return NextResponse.redirect(`${baseUrl}/login?error=Google+login+cancelled`)
+    return NextResponse.redirect(`${origin}/login?error=Google+login+cancelled`)
   }
 
   try {
@@ -38,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     if (!tokenRes.ok || !tokenData.access_token) {
       console.error('[GOOGLE TOKEN EXCHANGE FAILED]', tokenData)
-      return NextResponse.redirect(`${baseUrl}/login?error=Failed+to+exchange+Google+token`)
+      return NextResponse.redirect(`${origin}/login?error=Failed+to+exchange+Google+token`)
     }
 
     // 2. Fetch user profile from Google UserInfo endpoint
@@ -49,7 +48,7 @@ export async function GET(request: NextRequest) {
     const googleUser = await userinfoRes.json()
 
     if (!googleUser.email) {
-      return NextResponse.redirect(`${baseUrl}/login?error=Could+not+retrieve+Google+email`)
+      return NextResponse.redirect(`${origin}/login?error=Could+not+retrieve+Google+email`)
     }
 
     const email = googleUser.email
@@ -97,7 +96,7 @@ export async function GET(request: NextRequest) {
     })
 
     const roleTarget = user.role.toLowerCase()
-    const redirectUrl = new URL(`/${roleTarget}/dashboard?google=connected`, baseUrl)
+    const redirectUrl = new URL(`/${roleTarget}/dashboard?google=connected`, origin)
     const response = NextResponse.redirect(redirectUrl)
 
     response.headers.set(
@@ -108,6 +107,6 @@ export async function GET(request: NextRequest) {
     return response
   } catch (err) {
     console.error('[GOOGLE CALLBACK EXCEPTION]', err)
-    return NextResponse.redirect(`${baseUrl}/login?error=Google+login+internal+error`)
+    return NextResponse.redirect(`${origin}/login?error=Google+login+internal+error`)
   }
 }
