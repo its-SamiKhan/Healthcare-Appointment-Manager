@@ -38,91 +38,114 @@ export async function POST(request: NextRequest) {
       where: { userId },
       include: { user: { select: { name: true, email: true } } },
     })
+
     if (!patient) return errorResponse('Patient profile not found', 404)
 
-    // Get doctor + working hours
+    // Get doctor record
     const doctor = await prisma.doctor.findUnique({
       where: { id: doctorId },
-      include: { user: { select: { name: true, email: true, id: true } } },
+      include: { user: { select: { id: true, name: true, email: true } } },
     })
+
     if (!doctor) return errorResponse('Doctor not found', 404)
 
+    // Check doctor working hours & leaves
     const slotDate = new Date(date)
-    const endMinutes =
-      parseInt(startTime.split(':')[0]) * 60 +
-      parseInt(startTime.split(':')[1]) +
-      doctor.slotDuration
-    const endTime = `${Math.floor(endMinutes / 60).toString().padStart(2, '0')}:${(endMinutes % 60).toString().padStart(2, '0')}`
+    const dayName = slotDate
+      .toLocaleDateString('en-US', { weekday: 'long' })
+      .toLowerCase()
+    const workingHours = doctor.workingHours as Record<
+      string,
+      { start: string; end: string; available: boolean }
+    >
+    const daySchedule = workingHours[dayName]
 
-    // ─── CRITICAL: Database transaction with conflict check ───────────────────
-    // Uses Prisma's $transaction for atomicity.
-    // The raw SQL SELECT FOR UPDATE ensures row-level locking preventing race conditions.
-    let appointment
-    try {
-      appointment = await prisma.$transaction(async (tx) => {
-        // Raw SQL lock — prevents double booking under concurrent requests
-        const conflicting = await tx.$queryRaw<{ id: string }[]>`
-          SELECT id FROM "Appointment"
-          WHERE "doctorId" = ${doctorId}
-            AND date >= ${new Date(`${date}T00:00:00.000Z`)}
-            AND date <= ${new Date(`${date}T23:59:59.999Z`)}
-            AND "startTime" = ${startTime}
-            AND status IN ('CONFIRMED', 'HOLD', 'RESCHEDULED')
-          FOR UPDATE
-        `
-
-        if (conflicting.length > 0) {
-          throw new Error('SLOT_CONFLICT')
-        }
-
-        // Check doctor leave
-        const leave = await tx.doctorLeave.findFirst({
-          where: {
-            doctorId,
-            startDate: { lte: slotDate },
-            endDate: { gte: slotDate },
-          },
-        })
-        if (leave) throw new Error('DOCTOR_ON_LEAVE')
-
-        // Create appointment
-        return tx.appointment.create({
-          data: {
-            doctorId,
-            patientId: patient.id,
-            date: slotDate,
-            startTime,
-            endTime,
-            status: 'CONFIRMED',
-            notes,
-          },
-          include: {
-            doctor: { include: { user: { select: { name: true } } } },
-            patient: { include: { user: { select: { name: true, email: true } } } },
-          },
-        })
-      })
-    } catch (txError) {
-      if (txError instanceof Error) {
-        if (txError.message === 'SLOT_CONFLICT') {
-          return errorResponse(
-            'This slot was just booked by someone else. Please select another slot.',
-            409
-          )
-        }
-        if (txError.message === 'DOCTOR_ON_LEAVE') {
-          return errorResponse('Doctor is on leave for this date', 409)
-        }
-      }
-      throw txError
+    if (!daySchedule || !daySchedule.available) {
+      return errorResponse(`Doctor is not available on ${dayName}s`)
     }
 
-    // Release the slot hold (if any)
+    const isOnLeave = await prisma.doctorLeave.findFirst({
+      where: {
+        doctorId,
+        startDate: { lte: slotDate },
+        endDate: { gte: slotDate },
+      },
+    })
+
+    if (isOnLeave) {
+      return errorResponse('Doctor is on leave on the selected date')
+    }
+
+    // Calculate end time
+    const [startH, startM] = startTime.split(':').map(Number)
+    const endTotal = startH * 60 + startM + doctor.slotDuration
+    const endH = Math.floor(endTotal / 60)
+      .toString()
+      .padStart(2, '0')
+    const endM = (endTotal % 60).toString().padStart(2, '0')
+    const endTime = `${endH}:${endM}`
+
+    // Database transaction with SELECT FOR UPDATE to prevent double booking
+    const appointment = await prisma.$transaction(async (tx) => {
+      // Check existing confirmed/hold appointment
+      const existing = await tx.appointment.findFirst({
+        where: {
+          doctorId,
+          date: {
+            gte: new Date(`${date}T00:00:00.000Z`),
+            lte: new Date(`${date}T23:59:59.999Z`),
+          },
+          startTime,
+          status: { in: ['CONFIRMED', 'HOLD'] },
+        },
+      })
+
+      if (existing) {
+        throw new Error('SLOT_OCCUPIED')
+      }
+
+      // Check slot hold by another user
+      const activeHold = await tx.slotHold.findFirst({
+        where: {
+          doctorId,
+          date: {
+            gte: new Date(`${date}T00:00:00.000Z`),
+            lte: new Date(`${date}T23:59:59.999Z`),
+          },
+          startTime,
+          expiresAt: { gt: new Date() },
+          patientId: { not: patient.id },
+        },
+      })
+
+      if (activeHold) {
+        throw new Error('SLOT_HELD')
+      }
+
+      // Create appointment
+      return tx.appointment.create({
+        data: {
+          doctorId,
+          patientId: patient.id,
+          date: slotDate,
+          startTime,
+          endTime,
+          notes,
+          status: 'CONFIRMED',
+        },
+        include: {
+          doctor: { include: { user: { select: { name: true } } } },
+          patient: { include: { user: { select: { name: true } } } },
+        },
+      })
+    })
+
+    // Release slot hold
     await prisma.slotHold.deleteMany({
       where: { doctorId, patientId: patient.id, startTime },
     })
 
-    // ─── Post-booking triggers (non-blocking) ────────────────────────────────
+    // ─── Post-booking triggers (Awaited for serverless execution) ─────────────
     const dateStr = slotDate.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
@@ -130,41 +153,61 @@ export async function POST(request: NextRequest) {
       day: 'numeric',
     })
 
-    // Send confirmation email
-    sendBookingConfirmation({
-      to: patient.user.email,
-      patientName: patient.user.name,
-      doctorName: doctor.user.name,
-      specialization: doctor.specialization,
-      date: dateStr,
-      startTime,
-      endTime,
-      appointmentId: appointment.id,
-    }).catch((e) => console.error('[BOOKING EMAIL]', e))
+    // Send confirmation email synchronously so serverless function doesn't freeze
+    try {
+      await sendBookingConfirmation({
+        to: patient.user.email,
+        patientName: patient.user.name,
+        doctorName: doctor.user.name,
+        specialization: doctor.specialization,
+        date: dateStr,
+        startTime,
+        endTime,
+        appointmentId: appointment.id,
+      })
+    } catch (e) {
+      console.error('[BOOKING EMAIL EXCEPTION]', e)
+    }
 
-    // Create calendar event
-    createCalendarEvent({
-      userId: doctor.user.id,
-      appointmentId: appointment.id,
-      title: `Appointment with ${patient.user.name}`,
-      description: `Patient: ${patient.user.name}\nDoctor: Dr. ${doctor.user.name}\nTime: ${startTime}–${endTime}`,
-      date,
-      startTime,
-      endTime,
-      attendeeEmail: patient.user.email,
-    }).catch((e) => console.error('[BOOKING CALENDAR]', e))
+    // Create calendar event safely
+    try {
+      await createCalendarEvent({
+        userId: doctor.user.id,
+        appointmentId: appointment.id,
+        title: `Appointment with ${patient.user.name}`,
+        description: `Patient: ${patient.user.name}\nDoctor: Dr. ${doctor.user.name}\nTime: ${startTime}–${endTime}`,
+        date,
+        startTime,
+        endTime,
+        attendeeEmail: patient.user.email,
+      })
+    } catch (e) {
+      console.error('[BOOKING CALENDAR EXCEPTION]', e)
+    }
 
-    // Audit log
-    writeAuditLog({
-      actorId: userId,
-      action: 'BOOK_APPOINTMENT',
-      entityType: 'Appointment',
-      entityId: appointment.id,
-      metadata: { doctorId, patientId: patient.id, date, startTime },
-    }).catch((e) => console.error('[BOOKING AUDIT]', e))
+    // Audit log safely
+    try {
+      await writeAuditLog({
+        actorId: userId,
+        action: 'BOOK_APPOINTMENT',
+        entityType: 'Appointment',
+        entityId: appointment.id,
+        metadata: { doctorId, patientId: patient.id, date, startTime },
+      })
+    } catch (e) {
+      console.error('[BOOKING AUDIT EXCEPTION]', e)
+    }
 
     return successResponse(appointment, 'Appointment booked successfully', 201)
   } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === 'SLOT_OCCUPIED') {
+        return errorResponse('This time slot has already been booked', 409)
+      }
+      if (error.message === 'SLOT_HELD') {
+        return errorResponse('This time slot is currently on hold by another user', 409)
+      }
+    }
     console.error('[BOOK APPOINTMENT]', error)
     return errorResponse('Internal server error', 500)
   }
@@ -197,12 +240,40 @@ export async function GET(request: NextRequest) {
           },
           symptoms: { include: { summary: true } },
           visitNote: { include: { prescriptions: true } },
-          calendarEvent: true,
+        },
+        orderBy: { date: 'asc' },
+      })
+    } else if (role === 'DOCTOR') {
+      const doctor = await prisma.doctor.findUnique({ where: { userId } })
+      if (!doctor) return errorResponse('Doctor profile not found', 404)
+
+      appointments = await prisma.appointment.findMany({
+        where: {
+          doctorId: doctor.id,
+          ...(status && { status: status as never }),
+        },
+        include: {
+          patient: {
+            include: { user: { select: { name: true, email: true } } },
+          },
+          symptoms: { include: { summary: true } },
+          visitNote: { include: { prescriptions: true } },
+        },
+        orderBy: { date: 'asc' },
+      })
+    } else {
+      appointments = await prisma.appointment.findMany({
+        include: {
+          doctor: {
+            include: { user: { select: { name: true, email: true } } },
+          },
+          patient: {
+            include: { user: { select: { name: true, email: true } } },
+          },
+          symptoms: { include: { summary: true } },
         },
         orderBy: { date: 'desc' },
       })
-    } else {
-      return errorResponse('Forbidden', 403)
     }
 
     return successResponse(appointments)
