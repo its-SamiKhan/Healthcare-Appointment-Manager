@@ -264,109 +264,17 @@ export default function PatientDashboard() {
 
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor>(doctorsList[0])
 
-  // Active Patient Appointments List
-  const [myAppointments, setMyAppointments] = useState<Array<{ id: string; doctorName: string; specialization: string; date: string; time: string; type: string; status: string; fee: number }>>([
-    {
-      id: 'apt1',
-      doctorName: 'Dr. Ananya Sharma',
-      specialization: 'General Physician',
-      date: 'Sat 18 May, 2025',
-      time: '11:30 AM',
-      type: 'In-Clinic Visit',
-      status: 'Confirmed',
-      fee: 500,
-    },
-    {
-      id: 'apt2',
-      doctorName: 'Dr. Rajesh Patel',
-      specialization: 'Cardiologist',
-      date: 'Sun 19 May, 2025',
-      time: '03:30 PM',
-      type: 'In-Clinic Visit',
-      status: 'Confirmed',
-      fee: 750,
-    },
-    {
-      id: 'apt3',
-      doctorName: 'Dr. Sunita Rao',
-      specialization: 'Dermatologist',
-      date: 'Sun 25 May, 2025',
-      time: '04:00 PM',
-      type: 'In-Clinic Visit',
-      status: 'Scheduled',
-      fee: 600,
-    },
-  ])
+  // Active Patient Appointments List (Initially empty for new accounts; populated from DB/Doctor actions)
+  const [myAppointments, setMyAppointments] = useState<Array<{ id: string; doctorName: string; specialization: string; date: string; time: string; type: string; status: string; fee: number }>>([])
 
-  // Active Patient Prescriptions List
-  const [prescriptions] = useState([
-    {
-      id: 'rx1',
-      drugName: 'Telmisartan 40mg',
-      dosage: '1 Tab',
-      frequency: 'Once daily before breakfast',
-      duration: '30 Days Supply',
-      doctorName: 'Dr. Rajesh Patel',
-      category: 'Hypertension',
-      status: 'Active',
-    },
-    {
-      id: 'rx2',
-      drugName: 'Paracetamol 650mg',
-      dosage: '1 Tab',
-      frequency: '3x daily after meals',
-      duration: '5 Days Supply',
-      doctorName: 'Dr. Ananya Sharma',
-      category: 'Fever & Pain Relief',
-      status: 'Active',
-    },
-    {
-      id: 'rx3',
-      drugName: 'ORS Hydration Powder',
-      dosage: '1 Sachet',
-      frequency: 'Twice daily in 1L water',
-      duration: '5 Days Supply',
-      doctorName: 'Dr. Ananya Sharma',
-      category: 'Rehydration',
-      status: 'Active',
-    },
-  ])
+  // Active Patient Prescriptions List (Added ONLY when doctor submits visit notes)
+  const [prescriptions, setPrescriptions] = useState<Array<{ id: string; drugName: string; dosage: string; frequency: string; duration: string; doctorName: string; category: string; status: string }>>([])
 
-  // Past Visits with AI Post-Visit Summaries
-  const [pastVisits] = useState<PastVisit[]>([
-    {
-      id: 'v1',
-      doctorName: 'Dr. Ananya Sharma',
-      date: '10 May, 2025',
-      diagnosis: 'Acute Viral Fever & Mild Dehydration',
-      aiSummary: '✨ Gemini AI Summary: Patient presented with 101°F fever and fatigue. Advised 5 days bed rest, 3L daily water intake, and strict adherence to Paracetamol 650mg. Platelet count normal. Avoid strenuous workouts for 1 week.',
-      prescriptions: [
-        { name: 'Paracetamol 650mg', dosage: '1 Tab', frequency: '3x daily after meals (5 days)' },
-        { name: 'ORS Electrolyte Powder', dosage: '1 Sachet', frequency: 'Twice daily in 1L water' },
-        { name: 'Vitamin C 500mg', dosage: '1 Tab', frequency: 'Once daily after breakfast' },
-      ],
-    },
-    {
-      id: 'v2',
-      doctorName: 'Dr. Rajesh Patel',
-      date: '28 Apr, 2025',
-      diagnosis: 'Mild Hypertension (Stage 1)',
-      aiSummary: '✨ Gemini AI Summary: Blood pressure recorded at 135/88 mmHg. Advised low-salt Mediterranean diet, 30 mins morning walk, and daily BP logging.',
-      prescriptions: [
-        { name: 'Telmisartan 40mg', dosage: '1 Tab', frequency: 'Once daily before breakfast' },
-      ],
-    },
-    {
-      id: 'v3',
-      doctorName: 'Dr. Vikram Malhotra',
-      date: '15 Mar, 2025',
-      diagnosis: 'Lumbar Strain & Muscle Spasm',
-      aiSummary: '✨ Gemini AI Summary: Lower back strain from sedentary desk work. Advised ergonomic chair setup, warm compress application, and daily hamstrings stretching exercises.',
-      prescriptions: [
-        { name: 'Volini Pain Gel', dosage: 'Apply topically', frequency: 'Twice daily' },
-      ],
-    },
-  ])
+  // Past Visits with AI Post-Visit Summaries (Added ONLY when doctor completes consultation)
+  const [pastVisits, setPastVisits] = useState<PastVisit[]>([])
+
+  // Active Reminders List
+  const [activeReminders, setActiveReminders] = useState<Array<{ id: string; drugName: string; dosage: string; schedule: string; time: string; doctorName: string }>>([])
 
   // Sync tab with URL on mount & popstate
   useEffect(() => {
@@ -414,6 +322,74 @@ export default function PatientDashboard() {
           }))
         }
       })
+
+    fetch('/api/patient/dashboard', { headers })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.data) {
+          if (Array.isArray(d.data.upcoming)) {
+            const mappedApts = d.data.upcoming.map((apt: any) => ({
+              id: apt.id,
+              doctorName: apt.doctor?.user?.name || 'Dr. Specialist',
+              specialization: apt.doctor?.specialization || 'General Physician',
+              date: new Date(apt.date).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }),
+              time: apt.startTime,
+              type: 'In-Clinic Visit',
+              status: apt.status === 'CONFIRMED' ? 'Confirmed' : apt.status,
+              fee: 500,
+            }))
+            setMyAppointments(mappedApts)
+          }
+
+          if (Array.isArray(d.data.past)) {
+            const mappedPast = d.data.past.map((apt: any) => ({
+              id: apt.id,
+              doctorName: apt.doctor?.user?.name || 'Dr. Specialist',
+              date: new Date(apt.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+              diagnosis: apt.visitNote?.diagnosis || 'General Consultation',
+              aiSummary: apt.visitNote?.patientSummary || 'Gemini AI Summary: Patient completed consultation.',
+              prescriptions: (apt.visitNote?.prescriptions || []).map((p: any) => ({
+                name: `${p.drugName} ${p.dosage}`,
+                dosage: p.dosage,
+                frequency: p.frequency,
+              })),
+            }))
+            setPastVisits(mappedPast)
+
+            const realRx: any[] = []
+            d.data.past.forEach((apt: any) => {
+              if (apt.visitNote?.prescriptions) {
+                apt.visitNote.prescriptions.forEach((p: any) => {
+                  realRx.push({
+                    id: p.id,
+                    drugName: `${p.drugName} ${p.dosage}`,
+                    dosage: p.dosage,
+                    frequency: p.frequency,
+                    duration: `${p.durationDays} Days`,
+                    doctorName: apt.doctor?.user?.name || 'Dr. Specialist',
+                    category: apt.visitNote?.diagnosis || 'General Care',
+                    status: 'Active',
+                  })
+                })
+              }
+            })
+            setPrescriptions(realRx)
+          }
+
+          if (Array.isArray(d.data.medicationReminders)) {
+            const mappedReminders = d.data.medicationReminders.map((r: any) => ({
+              id: r.id,
+              drugName: r.prescription?.drugName || 'Medication',
+              dosage: r.prescription?.dosage || '1 Tab',
+              schedule: r.prescription?.frequency || 'As prescribed',
+              time: new Date(r.scheduledAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+              doctorName: 'Prescribed by Doctor',
+            }))
+            setActiveReminders(mappedReminders)
+          }
+        }
+      })
+      .catch((err) => console.error('Patient dashboard fetch error:', err))
 
     fetch('/api/doctors', { headers })
       .then((r) => r.json())
@@ -1057,47 +1033,65 @@ export default function PatientDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-bold text-slate-900 text-lg">My Active Appointments</h3>
-                  <p className="text-xs text-slate-400 mt-0.5 font-medium">Scheduled consultations and video session links</p>
-                </div>
-                <button
-                  onClick={() => handleTabSwitch('dashboard')}
-                  className="bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-2xs cursor-pointer"
-                >
-                  + Book New Appointment
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                {myAppointments.map((apt) => (
-                  <div key={apt.id} className="p-5 rounded-3xl border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-slate-50/60 hover:border-teal-300 transition">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-teal-100 text-teal-900 rounded-2xl flex items-center justify-center font-bold text-base">
-                        📅
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-slate-900 text-sm">{apt.doctorName}</h4>
-                        <p className="text-xs text-slate-500 font-medium">{apt.specialization} · {apt.type}</p>
-                        <p className="text-[11px] text-teal-700 font-bold mt-1">🗓️ {apt.date} at {apt.time}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-                      <span className="bg-emerald-100 text-emerald-800 text-xs px-3 py-1 rounded-xl font-bold">
-                        {apt.status}
-                      </span>
-                      <button
-                        onClick={() => triggerToast(`Reschedule request sent for appointment with ${apt.doctorName}`)}
-                        className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs px-3 py-2 rounded-xl transition cursor-pointer"
-                      >
-                        Reschedule
-                      </button>
-                    </div>
+                    <p className="text-xs text-slate-400 mt-0.5 font-medium">Scheduled consultations and video session links</p>
                   </div>
-                ))}
+                  <button
+                    onClick={() => handleTabSwitch('dashboard')}
+                    className="bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-2xs cursor-pointer"
+                  >
+                    + Book New Appointment
+                  </button>
+                </div>
+
+                {myAppointments.length === 0 ? (
+                  <div className="text-center py-12 bg-slate-50/50 rounded-3xl border border-slate-200/80 p-8 space-y-3">
+                    <div className="w-16 h-16 bg-white border border-slate-200 rounded-full flex items-center justify-center mx-auto text-2xl shadow-2xs">
+                      🗓️
+                    </div>
+                    <h4 className="font-bold text-slate-900 text-base">No Appointments Scheduled</h4>
+                    <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                      You currently have no active appointments. Select a specialist from the Dashboard and book your preferred date & time slot!
+                    </p>
+                    <button
+                      onClick={() => handleTabSwitch('dashboard')}
+                      className="mt-2 inline-block bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs px-4 py-2 rounded-xl transition shadow-2xs cursor-pointer"
+                    >
+                      Book Your First Consultation →
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {myAppointments.map((apt) => (
+                      <div key={apt.id} className="p-5 rounded-3xl border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-slate-50/60 hover:border-teal-300 transition">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-teal-100 text-teal-900 rounded-2xl flex items-center justify-center font-bold text-base">
+                            📅
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-slate-900 text-sm">{apt.doctorName}</h4>
+                            <p className="text-xs text-slate-500 font-medium">{apt.specialization} · {apt.type}</p>
+                            <p className="text-[11px] text-teal-700 font-bold mt-1">🗓️ {apt.date} at {apt.time}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                          <span className="bg-emerald-100 text-emerald-800 text-xs px-3 py-1 rounded-xl font-bold">
+                            {apt.status}
+                          </span>
+                          <button
+                            onClick={() => triggerToast(`Reschedule request sent for appointment with ${apt.doctorName}`)}
+                            className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs px-3 py-2 rounded-xl transition cursor-pointer"
+                          >
+                            Reschedule
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-        )}
+          )}
 
           {/* TAB 3: PAST VISITS & AI SUMMARIES */}
           {activeTab === 'visits' && (
@@ -1107,38 +1101,50 @@ export default function PatientDashboard() {
                 <p className="text-xs text-slate-400 mt-0.5 font-medium">Gemini AI clinical summaries, doctor advice, and prescribed medications</p>
               </div>
 
-              <div className="space-y-4">
-                {pastVisits.map((v) => (
-                  <div key={v.id} className="p-6 rounded-3xl border border-slate-200/80 space-y-4 bg-slate-50/50">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-bold text-slate-900 text-sm">{v.doctorName}</h4>
-                        <p className="text-xs text-slate-400 font-medium">Date: {v.date}</p>
-                      </div>
-                      <span className="bg-emerald-100 text-emerald-800 text-xs px-3 py-1 rounded-xl font-bold">
-                        Completed
-                      </span>
-                    </div>
-
-                    <div className="bg-white p-4 rounded-2xl border border-slate-200 space-y-2">
-                      <p className="text-xs font-bold text-slate-900">Diagnosis: {v.diagnosis}</p>
-                      <p className="text-xs text-slate-600 leading-relaxed font-medium">{v.aiSummary}</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <p className="text-xs font-bold text-slate-800">Prescribed Medications:</p>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        {v.prescriptions.map((rx, idx) => (
-                          <div key={idx} className="p-3 bg-white border border-slate-200 rounded-xl text-xs">
-                            <p className="font-bold text-slate-900">{rx.name}</p>
-                            <p className="text-[10px] text-slate-500">{rx.dosage} · {rx.frequency}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+              {pastVisits.length === 0 ? (
+                <div className="text-center py-12 bg-slate-50/50 rounded-3xl border border-slate-200/80 p-8 space-y-3">
+                  <div className="w-16 h-16 bg-white border border-slate-200 rounded-full flex items-center justify-center mx-auto text-2xl shadow-2xs">
+                    ✨
                   </div>
-                ))}
-              </div>
+                  <h4 className="font-bold text-slate-900 text-base">No Past Visit Summaries</h4>
+                  <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                    After you complete a consultation, your consulting doctor&apos;s diagnosis and Gemini AI patient-friendly medical summaries will be archived here.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {pastVisits.map((v) => (
+                    <div key={v.id} className="p-6 rounded-3xl border border-slate-200/80 space-y-4 bg-slate-50/50">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-bold text-slate-900 text-sm">{v.doctorName}</h4>
+                          <p className="text-xs text-slate-400 font-medium">Date: {v.date}</p>
+                        </div>
+                        <span className="bg-emerald-100 text-emerald-800 text-xs px-3 py-1 rounded-xl font-bold">
+                          Completed
+                        </span>
+                      </div>
+
+                      <div className="bg-white p-4 rounded-2xl border border-slate-200 space-y-2">
+                        <p className="text-xs font-bold text-slate-900">Diagnosis: {v.diagnosis}</p>
+                        <p className="text-xs text-slate-600 leading-relaxed font-medium">{v.aiSummary}</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <p className="text-xs font-bold text-slate-800">Prescribed Medications:</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          {v.prescriptions.map((rx, idx) => (
+                            <div key={idx} className="p-3 bg-white border border-slate-200 rounded-xl text-xs">
+                              <p className="font-bold text-slate-900">{rx.name}</p>
+                              <p className="text-[10px] text-slate-500">{rx.dosage} · {rx.frequency}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -1150,39 +1156,53 @@ export default function PatientDashboard() {
                   <h3 className="font-bold text-slate-900 text-lg">Active E-Prescriptions Manager</h3>
                   <p className="text-xs text-slate-400 mt-0.5 font-medium">Medications prescribed by your consulting doctors</p>
                 </div>
-                <button
-                  onClick={() => triggerToast('Downloaded official e-prescription PDF!')}
-                  className="bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition cursor-pointer"
-                >
-                  Download Rx PDF
-                </button>
+                {prescriptions.length > 0 && (
+                  <button
+                    onClick={() => triggerToast('Downloaded official e-prescription PDF!')}
+                    className="bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition cursor-pointer"
+                  >
+                    Download Rx PDF
+                  </button>
+                )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {prescriptions.map((rx) => (
-                  <div key={rx.id} className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase">
-                        {rx.category}
-                      </span>
-                      <span className="text-[10px] text-emerald-600 font-bold">● {rx.status}</span>
-                    </div>
-
-                    <div>
-                      <h4 className="font-bold text-slate-900 text-sm">{rx.drugName}</h4>
-                      <p className="text-xs text-slate-500 mt-0.5">{rx.dosage} · {rx.frequency}</p>
-                      <p className="text-[11px] text-slate-400 mt-1">Prescribed by {rx.doctorName}</p>
-                    </div>
-
-                    <button
-                      onClick={() => triggerToast(`Dose reminder set for ${rx.drugName}`)}
-                      className="w-full bg-white border border-slate-200 hover:bg-teal-50 text-teal-800 text-xs font-bold py-2 rounded-xl transition cursor-pointer"
-                    >
-                      ⏰ Set Dose Reminder
-                    </button>
+              {prescriptions.length === 0 ? (
+                <div className="text-center py-12 bg-slate-50/50 rounded-3xl border border-slate-200/80 p-8 space-y-3">
+                  <div className="w-16 h-16 bg-white border border-slate-200 rounded-full flex items-center justify-center mx-auto text-2xl shadow-2xs">
+                    💊
                   </div>
-                ))}
-              </div>
+                  <h4 className="font-bold text-slate-900 text-base">No Prescriptions Found</h4>
+                  <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                    Digital e-prescriptions and dosage instructions will appear here automatically when a doctor prescribes medication during your consultation.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {prescriptions.map((rx) => (
+                    <div key={rx.id} className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="bg-purple-100 text-purple-800 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase">
+                          {rx.category}
+                        </span>
+                        <span className="text-[10px] text-emerald-600 font-bold">● {rx.status}</span>
+                      </div>
+
+                      <div>
+                        <h4 className="font-bold text-slate-900 text-sm">{rx.drugName}</h4>
+                        <p className="text-xs text-slate-500 mt-0.5">{rx.dosage} · {rx.frequency}</p>
+                        <p className="text-[11px] text-slate-400 mt-1">Prescribed by {rx.doctorName}</p>
+                      </div>
+
+                      <button
+                        onClick={() => triggerToast(`Dose reminder set for ${rx.drugName}`)}
+                        className="w-full bg-white border border-slate-200 hover:bg-teal-50 text-teal-800 text-xs font-bold py-2 rounded-xl transition cursor-pointer"
+                      >
+                        ⏰ Set Dose Reminder
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -1194,37 +1214,31 @@ export default function PatientDashboard() {
                 <p className="text-xs text-slate-400 mt-0.5 font-medium">Daily dose schedule & upcoming medical checkups</p>
               </div>
 
-              <div className="space-y-3">
-                <div className="p-4 bg-purple-50 rounded-2xl border border-purple-100 flex items-center justify-between">
-                  <div>
-                    <p className="font-bold text-slate-900 text-xs">Telmisartan 40mg (1 Tab - Empty Stomach)</p>
-                    <p className="text-[11px] text-slate-500">Scheduled for 09:00 AM Today · Prescribed by Dr. Rajesh Patel</p>
+              {activeReminders.length === 0 ? (
+                <div className="text-center py-12 bg-slate-50/50 rounded-3xl border border-slate-200/80 p-8 space-y-3">
+                  <div className="w-16 h-16 bg-white border border-slate-200 rounded-full flex items-center justify-center mx-auto text-2xl shadow-2xs">
+                    ⏰
                   </div>
-                  <button onClick={() => triggerToast('✓ Dose marked as taken!')} className="bg-purple-700 text-white font-bold text-xs px-4 py-2 rounded-xl cursor-pointer">
-                    Mark Taken ✓
-                  </button>
+                  <h4 className="font-bold text-slate-900 text-base">No Active Medication Reminders</h4>
+                  <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                    You have no pending dose alerts. Timed medication reminders are created automatically when your consulting doctor prescribes medications.
+                  </p>
                 </div>
-
-                <div className="p-4 bg-teal-50 rounded-2xl border border-teal-100 flex items-center justify-between">
-                  <div>
-                    <p className="font-bold text-slate-900 text-xs">Doctor Session with Dr. Ananya Sharma</p>
-                    <p className="text-[11px] text-slate-500">Scheduled for Today at 11:30 AM · General Medicine Consultation</p>
-                  </div>
-                  <button onClick={() => triggerToast('Viewing appointment details for Dr. Ananya Sharma')} className="bg-teal-700 text-white font-bold text-xs px-4 py-2 rounded-xl cursor-pointer">
-                    View Details →
-                  </button>
+              ) : (
+                <div className="space-y-3">
+                  {activeReminders.map((r) => (
+                    <div key={r.id} className="p-4 bg-purple-50 rounded-2xl border border-purple-100 flex items-center justify-between">
+                      <div>
+                        <p className="font-bold text-slate-900 text-xs">{r.drugName} ({r.dosage})</p>
+                        <p className="text-[11px] text-slate-500">Scheduled for {r.time} · {r.doctorName}</p>
+                      </div>
+                      <button onClick={() => triggerToast('✓ Dose marked as taken!')} className="bg-purple-700 text-white font-bold text-xs px-4 py-2 rounded-xl cursor-pointer">
+                        Mark Taken ✓
+                      </button>
+                    </div>
+                  ))}
                 </div>
-
-                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">
-                  <div>
-                    <p className="font-bold text-slate-900 text-xs">Paracetamol 650mg (After Lunch)</p>
-                    <p className="text-[11px] text-slate-500">Scheduled for 02:00 PM Today · Fever & Pain Relief</p>
-                  </div>
-                  <button onClick={() => triggerToast('✓ Dose marked as taken!')} className="bg-slate-800 text-white font-bold text-xs px-4 py-2 rounded-xl cursor-pointer">
-                    Mark Taken ✓
-                  </button>
-                </div>
-              </div>
+              )}
             </div>
           )}
 
