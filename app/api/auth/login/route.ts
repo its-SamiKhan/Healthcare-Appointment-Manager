@@ -6,7 +6,7 @@ import { successResponse, errorResponse } from '@/lib/api-response'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, password } = body
+    const { email, password, targetRole } = body
 
     if (!email || !password) {
       return errorResponse('Email and password are required')
@@ -19,6 +19,21 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return errorResponse('Invalid credentials', 401)
+    }
+
+    // Role mismatch check: reject if user's account role does not match the selected portal switch
+    if (targetRole && user.role !== targetRole) {
+      const portalNames: Record<string, string> = {
+        PATIENT: 'Patient Portal',
+        DOCTOR: 'Doctor Portal',
+        ADMIN: 'Admin Portal',
+      }
+      const actualPortal = portalNames[user.role] || user.role
+      const requestedPortal = portalNames[targetRole] || targetRole
+      return errorResponse(
+        `Access Denied: This account is registered as a ${user.role}. Please switch to the ${actualPortal} or use a Doctor account for ${requestedPortal}.`,
+        403
+      )
     }
 
     let isValid = await comparePassword(password, user.passwordHash)

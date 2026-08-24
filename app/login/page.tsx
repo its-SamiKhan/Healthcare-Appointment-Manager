@@ -19,22 +19,22 @@ const TEST_ACCOUNTS = [
     role: 'Patient',
     email: 'patient@example.com',
     password: 'MediCare#Secure2026!',
-    color: 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100',
-    badge: '🏥 Patient',
+    color: 'bg-slate-100 text-slate-800 border-slate-300 hover:bg-slate-200',
+    badge: 'Patient',
   },
   {
     role: 'Doctor',
     email: 'ananya.sharma@healthcare.com',
     password: 'MediCare#Secure2026!',
-    color: 'bg-teal-50 text-teal-800 border-teal-200 hover:bg-teal-100',
-    badge: '👨‍⚕️ Dr. Ananya',
+    color: 'bg-slate-100 text-slate-800 border-slate-300 hover:bg-slate-200',
+    badge: 'Dr. Ananya',
   },
   {
     role: 'Admin',
     email: 'admin@healthcare.com',
     password: 'MediCare#Secure2026!',
     color: 'bg-slate-100 text-slate-800 border-slate-300 hover:bg-slate-200',
-    badge: '⚡ Admin',
+    badge: 'Admin',
   },
 ]
 
@@ -88,7 +88,7 @@ export default function LoginPage({ initialMode = 'login' }: LoginPageProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(
           mode === 'login'
-            ? { email: form.email, password: form.password }
+            ? { email: form.email, password: form.password, targetRole: activePortal }
             : form
         ),
       })
@@ -166,7 +166,7 @@ export default function LoginPage({ initialMode = 'login' }: LoginPageProps) {
               {/* Quick Test Accounts */}
               <div className="mb-3 bg-slate-50/90 border border-slate-200/90 rounded-2xl p-3.5 sm:p-4 shadow-2xs">
                 <p className="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 text-center">
-                  🔑 Quick Demo Login (Click to Auto-fill)
+                  QUICK DEMO LOGIN (CLICK TO AUTO-FILL)
                 </p>
                 <div className="grid grid-cols-3 gap-2">
                   {TEST_ACCOUNTS.map((acc) => (
@@ -183,29 +183,34 @@ export default function LoginPage({ initialMode = 'login' }: LoginPageProps) {
                     </button>
                   ))}
                 </div>
-                <p className="text-[10px] text-slate-400 text-center mt-1.5 font-medium">
-                  Password: <code className="font-mono text-slate-700 font-bold">MediCare#Secure2026!</code>
-                </p>
               </div>
 
-              {/* Pill-Shaped Portal Selector Switch */}
-              <div className="mb-4 bg-slate-100 p-1.5 rounded-full flex items-center justify-between border border-slate-200/90 shadow-2xs">
+              {/* Smooth Sliding Window Portal Selector Switch */}
+              <div className="mb-4 bg-white p-1 rounded-full relative flex items-center border border-slate-200/90 shadow-2xs overflow-hidden">
+                {/* 60fps Smooth Sliding Background Indicator */}
+                <div
+                  className="absolute top-1 bottom-1 bg-[#eaf6f2] border border-teal-200/80 rounded-full shadow-2xs transition-all duration-300 ease-out"
+                  style={{
+                    width: 'calc((100% - 8px) / 3)',
+                    left: activePortal === 'PATIENT' ? '4px' : activePortal === 'DOCTOR' ? 'calc(33.333% + 1.5px)' : 'calc(66.666% - 1px)',
+                  }}
+                />
+
                 {[
-                  { role: 'PATIENT', label: '🏥 Patient Portal', email: 'patient@example.com' },
-                  { role: 'DOCTOR', label: '👨‍⚕️ Doctor Portal', email: 'ananya.sharma@healthcare.com' },
-                  { role: 'ADMIN', label: '⚡ Admin Portal', email: 'admin@healthcare.com' },
+                  { role: 'PATIENT', label: 'Patient Portal' },
+                  { role: 'DOCTOR', label: 'Doctor Portal' },
+                  { role: 'ADMIN', label: 'Admin Portal' },
                 ].map((p) => (
                   <button
                     key={p.role}
                     type="button"
                     onClick={() => {
                       setActivePortal(p.role as 'PATIENT' | 'DOCTOR' | 'ADMIN')
-                      handleQuickLogin(p.email, 'MediCare#Secure2026!')
                     }}
-                    className={`flex-1 py-1.5 px-2 rounded-full text-[10px] sm:text-[11px] font-extrabold transition-all duration-200 text-center cursor-pointer ${
+                    className={`flex-1 py-1.5 px-2 relative z-10 text-[10px] sm:text-[11px] transition-colors duration-200 text-center cursor-pointer ${
                       activePortal === p.role
-                        ? 'bg-teal-700 text-white shadow-md scale-[1.02]'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                        ? 'text-teal-950 font-black'
+                        : 'text-slate-600 hover:text-slate-900 font-bold'
                     }`}
                   >
                     {p.label}
