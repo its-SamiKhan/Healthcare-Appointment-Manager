@@ -14,11 +14,12 @@ const ROLE_ROUTE_MAP: Record<string, string[]> = {
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Allow static assets
+  // Allow static assets & image files
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon') ||
-    pathname.startsWith('/public')
+    pathname.startsWith('/public') ||
+    /\.(png|jpg|jpeg|gif|webp|svg|ico)$/i.test(pathname)
   ) {
     return NextResponse.next()
   }
@@ -88,5 +89,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico)$).*)'],
 }

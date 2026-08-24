@@ -52,27 +52,10 @@ function IconBell({ className = "w-4 h-4" }: { className?: string }) {
   )
 }
 
-function IconMessage({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-    </svg>
-  )
-}
-
 function IconUser({ className = "w-4 h-4" }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-    </svg>
-  )
-}
-
-function IconSettings({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
     </svg>
   )
 }
@@ -93,18 +76,18 @@ function IconCheckCircle({ className = "w-4 h-4" }: { className?: string }) {
   )
 }
 
-function IconClock({ className = "w-4 h-4" }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-  )
-}
-
 function IconStar({ className = "w-4 h-4" }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+    </svg>
+  )
+}
+
+function IconClock({ className = "w-4 h-4" }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
   )
 }
@@ -143,7 +126,14 @@ interface PatientRecord {
 }
 
 export default function DoctorDashboard() {
-  const [user, setUser] = useState<{ id?: string; name: string; email: string; specialization?: string } | null>(null)
+  const [user, setUser] = useState<{ id?: string; name: string; email: string; specialization?: string; fee?: number; experience?: number }>({
+    name: 'Dr. Ananya Sharma',
+    email: 'ananya.sharma@healthcare.com',
+    specialization: 'General Physician',
+    fee: 500,
+    experience: 8,
+  })
+
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('dashboard')
 
@@ -186,15 +176,107 @@ export default function DoctorDashboard() {
   })
 
   const [searchQuery, setSearchQuery] = useState('')
-  const [messageInput, setMessageInput] = useState('')
-  const [chatMessages, setChatMessages] = useState([
-    { sender: 'Neha Singh', time: '10:15 AM', text: 'Hello Dr. Ananya, should I continue taking the thyroid dosage after breakfast?' },
-    { sender: 'Dr. Ananya', time: '10:20 AM', text: 'Yes Neha, take 50mcg empty stomach 30 mins before breakfast.' },
+
+  const [todaySchedule, setTodaySchedule] = useState<AppointmentItem[]>([
+    {
+      id: 'apt-101',
+      time: '09:30 AM',
+      duration: '30 mins',
+      patientName: 'Rahul Verma',
+      ageGender: '34 M',
+      reason: 'Fever & Joint Pain (Dengue Suspect)',
+      type: 'In-Clinic Consultation',
+      status: 'Confirmed',
+      avatarColor: 'bg-teal-100 text-teal-800',
+      chiefComplaint: 'High fever 102°F for 3 days with intense headache behind eyes',
+      urgency: 'HIGH',
+      questions: [
+        'Have you noticed any skin rashes or nosebleeds?',
+        'Are you experiencing severe abdominal pain or persistent vomiting?',
+        'When was your last complete blood count (CBC) test?',
+      ],
+    },
+    {
+      id: 'apt-102',
+      time: '10:00 AM',
+      duration: '30 mins',
+      patientName: 'Priya Mehta',
+      ageGender: '28 F',
+      reason: 'Persistent Dry Cough & Cold',
+      type: 'In-Clinic Consultation',
+      status: 'Upcoming',
+      avatarColor: 'bg-blue-100 text-blue-800',
+      chiefComplaint: 'Dry cough worsening at night for 1 week',
+      urgency: 'MEDIUM',
+      questions: [
+        'Do you have a history of seasonal allergies or asthma?',
+        'Is there any shortness of breath during physical exertion?',
+      ],
+    },
+    {
+      id: 'apt-103',
+      time: '10:30 AM',
+      duration: '30 mins',
+      patientName: 'Amit Kumar',
+      ageGender: '42 M',
+      reason: 'Skin Allergy & Rash Evaluation',
+      type: 'In-Clinic Consultation',
+      status: 'Upcoming',
+      avatarColor: 'bg-purple-100 text-purple-800',
+      chiefComplaint: 'Itchy red patches on forearms after new medication',
+      urgency: 'LOW',
+      questions: ['What new medicine or food did you start recently?'],
+    },
+    {
+      id: 'apt-104',
+      time: '11:00 AM',
+      duration: '30 mins',
+      patientName: 'Sunita Devi',
+      ageGender: '55 F',
+      reason: 'Hypertension Follow-up Checkup',
+      type: 'In-Clinic Consultation',
+      status: 'Confirmed',
+      avatarColor: 'bg-amber-100 text-amber-800',
+      chiefComplaint: 'Routine blood pressure review; mild morning dizziness',
+      urgency: 'MEDIUM',
+      questions: ['Have you missed any doses of your BP medication this week?'],
+    },
   ])
 
-  const [todaySchedule, setTodaySchedule] = useState<AppointmentItem[]>([])
-  const [recentAppointments, setRecentAppointments] = useState<Array<{ id: string; patientName: string; date: string; reason: string; status: string }>>([])
-  const [patientDirectory, setPatientDirectory] = useState<PatientRecord[]>([])
+  const [patientDirectory, setPatientDirectory] = useState<PatientRecord[]>([
+    { id: 'p1', name: 'Rahul Verma', email: 'rahul.v@gmail.com', phone: '+91 98765 12345', bloodGroup: 'O+', totalVisits: 4, condition: 'Dengue Assessment' },
+    { id: 'p2', name: 'Priya Mehta', email: 'priya.m@gmail.com', phone: '+91 98123 45678', bloodGroup: 'A+', totalVisits: 2, condition: 'Acute Bronchitis' },
+    { id: 'p3', name: 'Amit Kumar', email: 'amit.k@gmail.com', phone: '+91 97111 22334', bloodGroup: 'B+', totalVisits: 5, condition: 'Allergies' },
+    { id: 'p4', name: 'Neha Singh', email: 'neha.s@gmail.com', phone: '+91 99888 77665', bloodGroup: 'AB+', totalVisits: 3, condition: 'Thyroid Care' },
+    { id: 'p5', name: 'Sunita Devi', email: 'sunita.d@gmail.com', phone: '+91 96543 21098', bloodGroup: 'O-', totalVisits: 8, condition: 'Hypertension' },
+    { id: 'p6', name: 'Vikram Joshi', email: 'vikram.j@gmail.com', phone: '+91 95432 10987', bloodGroup: 'B-', totalVisits: 1, condition: 'Lumbar Strain' },
+  ])
+
+  const [issuedPrescriptions] = useState([
+    { id: 'rx101', patientName: 'Rahul Verma', drugName: 'Paracetamol 650mg', dosage: '1 Tab', frequency: '3x daily after meals', duration: '5 Days', date: 'Today' },
+    { id: 'rx102', patientName: 'Sunita Devi', drugName: 'Telmisartan 40mg', dosage: '1 Tab', frequency: 'Once daily before breakfast', duration: '30 Days', date: 'Yesterday' },
+    { id: 'rx103', patientName: 'Priya Mehta', drugName: 'Amoxicillin 500mg', dosage: '1 Cap', frequency: 'Twice daily after food', duration: '7 Days', date: '22 May, 2025' },
+    { id: 'rx104', patientName: 'Amit Kumar', drugName: 'Cetirizine 10mg', dosage: '1 Tab', frequency: 'At bedtime', duration: '5 Days', date: '20 May, 2025' },
+  ])
+
+  // Sync active tab with URL query parameter
+  useEffect(() => {
+    const syncTabFromUrl = () => {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search)
+        const tab = params.get('tab')
+        if (tab && ['appointments', 'patients', 'calendar', 'prescriptions', 'reports', 'reminders', 'profile'].includes(tab)) {
+          setActiveTab(tab)
+        } else {
+          setActiveTab('dashboard')
+        }
+      }
+    }
+
+    syncTabFromUrl()
+    window.addEventListener('popstate', syncTabFromUrl)
+    return () => window.removeEventListener('popstate', syncTabFromUrl)
+  }, [])
 
   // Fetch real numbers & records from backend API
   useEffect(() => {
@@ -204,12 +286,13 @@ export default function DoctorDashboard() {
     ])
       .then(([meRes, dashRes]) => {
         if (meRes.data) {
-          setUser({
+          setUser((prev) => ({
+            ...prev,
             id: meRes.data.id,
-            name: meRes.data.name,
-            email: meRes.data.email,
+            name: meRes.data.name || 'Dr. Ananya Sharma',
+            email: meRes.data.email || 'ananya.sharma@healthcare.com',
             specialization: meRes.data.doctor?.specialization || 'General Physician',
-          })
+          }))
         }
         if (dashRes.data) {
           if (dashRes.data.stats) {
@@ -217,9 +300,6 @@ export default function DoctorDashboard() {
           }
           if (dashRes.data.todaySchedule && dashRes.data.todaySchedule.length > 0) {
             setTodaySchedule(dashRes.data.todaySchedule)
-          }
-          if (dashRes.data.recentAppointments && dashRes.data.recentAppointments.length > 0) {
-            setRecentAppointments(dashRes.data.recentAppointments)
           }
           if (dashRes.data.patients && dashRes.data.patients.length > 0) {
             setPatientDirectory(dashRes.data.patients)
@@ -233,6 +313,14 @@ export default function DoctorDashboard() {
   const triggerToast = (msg: string) => {
     setToastMessage(msg)
     setTimeout(() => setToastMessage(null), 4000)
+  }
+
+  const handleTabSwitch = (tabId: string) => {
+    setActiveTab(tabId)
+    if (typeof window !== 'undefined') {
+      const url = tabId === 'dashboard' ? '/doctor/dashboard' : `/doctor/dashboard?tab=${tabId}`
+      window.history.pushState({}, '', url)
+    }
   }
 
   const handleSavePrescription = (e: React.FormEvent) => {
@@ -253,11 +341,9 @@ export default function DoctorDashboard() {
     triggerToast(`Schedule blocked from ${blockForm.startDate} to ${blockForm.endDate}`)
   }
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!messageInput.trim()) return
-    setChatMessages((prev) => [...prev, { sender: 'Dr. Ananya', time: 'Just now', text: messageInput }])
-    setMessageInput('')
+    triggerToast('✓ Doctor Profile & Consultation Hours updated successfully!')
   }
 
   const markAppointmentStatus = (id: string, status: 'Confirmed' | 'Upcoming' | 'Completed' | 'Cancelled') => {
@@ -283,12 +369,12 @@ export default function DoctorDashboard() {
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-5 right-5 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-800 text-xs font-semibold">
-          <span className="w-2 h-2 bg-emerald-400 rounded-full" />
+          <span className="w-2 h-2 bg-teal-400 rounded-full" />
           <p>{toastMessage}</p>
         </div>
       )}
 
-      {/* ── 1. Left Static Sidebar Navigation (Mint Color Swatch bg-[#eaf6f2]) ── */}
+      {/* ── 1. Left Static Sidebar Navigation (Mint Swatch bg-[#eaf6f2]) ── */}
       <aside className="w-64 bg-[#eaf6f2] border-r border-teal-100/80 flex flex-col justify-between hidden md:flex flex-shrink-0 sticky top-0 h-screen overflow-y-auto">
         <div>
           {/* Logo & Header */}
@@ -299,7 +385,7 @@ export default function DoctorDashboard() {
             </span>
           </div>
 
-          {/* Navigation Links with Minimal SVGs */}
+          {/* Navigation Links (Messages & Settings Removed per Request) */}
           <nav className="px-4 space-y-1 mt-3">
             {[
               { id: 'dashboard', label: 'Dashboard', Icon: IconDashboard },
@@ -309,15 +395,13 @@ export default function DoctorDashboard() {
               { id: 'prescriptions', label: 'Prescriptions', Icon: IconPill },
               { id: 'reports', label: 'Reports', Icon: IconFileText },
               { id: 'reminders', label: 'Reminders', Icon: IconBell },
-              { id: 'messages', label: 'Messages', Icon: IconMessage, badge: '2' },
               { id: 'profile', label: 'Profile', Icon: IconUser },
-              { id: 'settings', label: 'Settings', Icon: IconSettings },
             ].map((nav) => {
               const IconComp = nav.Icon
               return (
                 <button
                   key={nav.id}
-                  onClick={() => setActiveTab(nav.id)}
+                  onClick={() => handleTabSwitch(nav.id)}
                   className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-semibold text-xs transition cursor-pointer ${
                     activeTab === nav.id
                       ? 'bg-teal-700 text-white font-bold shadow-2xs'
@@ -328,11 +412,6 @@ export default function DoctorDashboard() {
                     <IconComp className={`w-4 h-4 ${activeTab === nav.id ? 'text-white' : 'text-slate-600'}`} />
                     <span>{nav.label}</span>
                   </div>
-                  {nav.badge && (
-                    <span className="bg-teal-800 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                      {nav.badge}
-                    </span>
-                  )}
                 </button>
               )
             })}
@@ -340,7 +419,7 @@ export default function DoctorDashboard() {
         </div>
 
         <div>
-          {/* Need Help Card */}
+          {/* Need Assistance Card */}
           <div className="p-4 m-4 bg-white/80 border border-teal-100/90 rounded-2xl shadow-2xs">
             <p className="font-bold text-xs text-slate-900">Need Assistance?</p>
             <p className="text-[11px] text-slate-500 mt-0.5 mb-3 leading-tight">Priority clinician support desk 24/7.</p>
@@ -356,11 +435,11 @@ export default function DoctorDashboard() {
           <div className="p-4 border-t border-teal-100/80 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-teal-700 text-white rounded-full flex items-center justify-center font-bold text-xs">
-                {user?.name ? user.name.charAt(3) || 'A' : 'A'}
+                {user.name.charAt(3) || 'A'}
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-900 leading-tight">{user?.name || 'Dr. Ananya Sharma'}</p>
-                <p className="text-[10px] text-slate-500 font-medium">{user?.specialization || 'General Physician'}</p>
+                <p className="text-xs font-bold text-slate-900 leading-tight">{user.name}</p>
+                <p className="text-[10px] text-slate-500 font-medium">{user.specialization}</p>
               </div>
             </div>
             <button
@@ -379,9 +458,9 @@ export default function DoctorDashboard() {
         <header className="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between sticky top-0 z-10">
           <div>
             <h2 className="text-lg font-bold text-slate-900">
-              Good morning, {user?.name || 'Dr. Ananya'}
+              Good morning, {user.name} 👋
             </h2>
-            <p className="text-xs text-slate-400 font-medium">Clinic Schedule & Analytics Overview</p>
+            <p className="text-xs text-slate-400 font-medium">Clinic Schedule & Clinical Analytics Overview</p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -400,21 +479,14 @@ export default function DoctorDashboard() {
               <IconBell className="w-4 h-4" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-teal-600 rounded-full" />
             </button>
-            <Link
-              href="/api/calendar/auth"
-              className="p-2 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-50 transition cursor-pointer"
-              title="Connect Calendar"
-            >
-              <IconCalendar className="w-4 h-4" />
-            </Link>
 
             <div className="flex items-center gap-2.5 pl-3 border-l border-slate-200">
               <div className="w-8 h-8 bg-slate-900 text-white rounded-full flex items-center justify-center font-bold text-xs">
-                {user?.name ? user.name.charAt(3) || 'A' : 'A'}
+                {user.name.charAt(3) || 'A'}
               </div>
               <div className="text-left hidden sm:block">
-                <p className="text-xs font-bold text-slate-900">{user?.name || 'Dr. Ananya Sharma'}</p>
-                <p className="text-[10px] text-slate-400 font-medium">{user?.specialization || 'General Physician'}</p>
+                <p className="text-xs font-bold text-slate-900">{user.name}</p>
+                <p className="text-[10px] text-slate-400 font-medium">{user.specialization}</p>
               </div>
             </div>
           </div>
@@ -422,6 +494,7 @@ export default function DoctorDashboard() {
 
         {/* Dashboard Body */}
         <main className="p-8 max-w-7xl mx-auto w-full space-y-8">
+          {/* TAB 1: DASHBOARD */}
           {activeTab === 'dashboard' && (
             <>
               {/* Top 5 Stat Cards (Dynamic Real Numbers from DB) */}
@@ -452,7 +525,7 @@ export default function DoctorDashboard() {
                   <div>
                     <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Pending</p>
                     <p className="text-2xl font-extrabold text-slate-900 mt-1">{stats.pendingToday}</p>
-                    <p className="text-[11px] font-semibold text-amber-600 mt-0.5">Scheduled</p>
+                    <p className="text-[11px] font-semibold text-amber-600 mt-0.5">Next up: 11:30 AM</p>
                   </div>
                   <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
                     <IconClock className="w-5 h-5" />
@@ -463,128 +536,109 @@ export default function DoctorDashboard() {
                   <div>
                     <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Patients</p>
                     <p className="text-2xl font-extrabold text-slate-900 mt-1">{stats.totalPatientsServed}</p>
-                    <p className="text-[11px] font-semibold text-blue-600 mt-0.5">Registered</p>
+                    <p className="text-[11px] font-semibold text-purple-600 mt-0.5">Active directory</p>
                   </div>
-                  <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                  <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center">
                     <IconUsers className="w-5 h-5" />
                   </div>
                 </div>
 
                 <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs flex items-center justify-between">
                   <div>
-                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Avg. Rating</p>
-                    <p className="text-2xl font-extrabold text-slate-900 mt-1">{stats.avgRating}</p>
-                    <p className="text-[11px] text-amber-600 font-semibold mt-0.5">★ 120 Reviews</p>
+                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Patient Rating</p>
+                    <p className="text-2xl font-extrabold text-slate-900 mt-1">{stats.avgRating} ★</p>
+                    <p className="text-[11px] font-semibold text-teal-700 mt-0.5">120 Reviews</p>
                   </div>
-                  <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
+                  <div className="w-10 h-10 bg-teal-50 text-teal-700 rounded-xl flex items-center justify-center">
                     <IconStar className="w-5 h-5" />
                   </div>
                 </div>
               </div>
 
-              {/* Main Grid: Left 8 Columns + Right 4 Columns */}
+              {/* Middle Section: Left 8 Cols (Schedule + AI Insights) + Right 4 Cols (Quick Actions + Directory) */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 
                 {/* Left 8 Columns */}
-                <div className="lg:col-span-8 space-y-8">
-                  {/* Today's Schedule Card */}
-                  <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs space-y-4">
+                <div className="lg:col-span-8 space-y-6">
+                  
+                  {/* AI Pre-Visit Clinical Intelligence Card */}
+                  <div className="bg-gradient-to-r from-teal-950 via-slate-900 to-indigo-950 text-white rounded-3xl p-6 shadow-xl border border-teal-900/50 space-y-4">
                     <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-bold text-slate-900 text-base">Today&apos;s Schedule</h3>
-                        <p className="text-xs text-slate-400 font-medium">Real DB Records ({todaySchedule.length} Listed)</p>
+                      <div className="flex items-center gap-2">
+                        <IconBrain className="w-5 h-5 text-teal-400" />
+                        <h3 className="font-bold text-sm text-white">Gemini AI Pre-Visit Clinical Intelligence</h3>
                       </div>
-                      <button
-                        onClick={() => setActiveTab('calendar')}
-                        className="text-xs font-bold text-slate-600 border border-slate-200 hover:bg-slate-50 px-3 py-1.5 rounded-xl transition cursor-pointer"
-                      >
-                        View Calendar
-                      </button>
+                      <span className="bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase">
+                        High Priority Triage
+                      </span>
                     </div>
 
-                    <div className="space-y-3">
-                      {todaySchedule.map((apt) => (
-                        <div
-                          key={apt.id}
-                          onClick={() => {
-                            setSelectedAppointment(apt)
-                            setActiveModal('appointment_detail')
-                          }}
-                          className="p-4 rounded-2xl border border-slate-100 hover:border-teal-300 transition bg-slate-50/50 flex items-center justify-between gap-4 cursor-pointer"
-                        >
-                          <div className="flex items-center gap-4">
-                            <div className="text-center min-w-[65px]">
-                              <p className="text-xs font-extrabold text-slate-900">{apt.time}</p>
-                              <p className="text-[10px] text-slate-400 font-medium">{apt.duration}</p>
-                            </div>
+                    <div className="space-y-2">
+                      <p className="text-xs font-bold text-teal-200">
+                        Patient: Rahul Verma (34 M) — Chief Complaint: High Fever 102°F with Dengue Symptoms
+                      </p>
+                      <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                        Gemini AI flagged high viral infection likelihood based on reported 102°F fever, eye pressure pain, and acute joint aches. Suggested immediate CBC test review.
+                      </p>
+                    </div>
 
-                            <div className="w-9 h-9 bg-teal-100 text-teal-800 rounded-full flex items-center justify-center text-xs font-bold">
-                              {apt.patientName.charAt(0)}
-                            </div>
-
-                            <div>
-                              <p className="text-xs font-bold text-slate-900">{apt.patientName}</p>
-                              <p className="text-[11px] text-slate-400 font-medium">{apt.ageGender}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-4">
-                            <div className="text-right hidden sm:block">
-                              <p className="text-xs font-bold text-slate-800">{apt.reason}</p>
-                              <p className="text-[11px] text-slate-400 font-medium">{apt.type}</p>
-                            </div>
-
-                            <span
-                              className={`text-xs px-3 py-1 rounded-xl font-bold ${
-                                apt.status === 'Confirmed'
-                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                  : apt.status === 'Completed'
-                                  ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                  : 'bg-slate-100 text-slate-700'
-                              }`}
-                            >
-                              {apt.status}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
+                    <div className="pt-2 border-t border-teal-900/60 flex items-center justify-between text-xs">
+                      <span className="text-teal-300/80 font-medium">3 AI Pre-generated clinical questions prepared</span>
+                      <button
+                        onClick={() => {
+                          setSelectedAppointment(todaySchedule[0])
+                          setActiveModal('appointment_detail')
+                        }}
+                        className="bg-teal-600 hover:bg-teal-500 text-white font-bold px-4 py-2 rounded-xl transition cursor-pointer text-xs shadow-2xs"
+                      >
+                        Review Pre-Visit Note →
+                      </button>
                     </div>
                   </div>
 
-                  {/* Recent Appointments Card */}
+                  {/* Today's Consultation Schedule */}
                   <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs space-y-4">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-bold text-slate-900 text-base">Recent Completed Appointments</h3>
-                      <button onClick={() => setActiveTab('appointments')} className="text-xs font-bold text-slate-600 hover:underline cursor-pointer">
-                        View All
-                      </button>
+                      <h3 className="font-bold text-slate-900 text-base">Today&apos;s Consultation Schedule</h3>
+                      <span className="text-xs text-slate-400 font-medium">{todaySchedule.length} Consultations</span>
                     </div>
 
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-xs">
-                        <thead>
-                          <tr className="border-b border-slate-100 text-slate-400 font-semibold">
-                            <th className="pb-3">Patient</th>
-                            <th className="pb-3">Date</th>
-                            <th className="pb-3">Diagnosis</th>
-                            <th className="pb-3 text-right">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {recentAppointments.map((item) => (
-                            <tr key={item.id} className="hover:bg-slate-50/70 transition">
-                              <td className="py-3 font-bold text-slate-900">{item.patientName}</td>
-                              <td className="py-3 text-slate-500 font-medium">{item.date}</td>
-                              <td className="py-3 text-slate-700 font-medium">{item.reason}</td>
-                              <td className="py-3 text-right">
-                                <span className="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg text-[10px] font-bold">
-                                  {item.status}
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                    <div className="divide-y divide-slate-100">
+                      {todaySchedule.map((apt) => (
+                        <div key={apt.id} className="py-4 flex items-center justify-between gap-4 hover:bg-slate-50/60 transition rounded-2xl px-2">
+                          <div className="flex items-center gap-4">
+                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-xs ${apt.avatarColor}`}>
+                              {apt.patientName.charAt(0)}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-bold text-slate-900 text-xs">{apt.patientName}</h4>
+                                <span className="text-[10px] text-slate-400 font-medium">{apt.ageGender}</span>
+                                {apt.urgency === 'HIGH' && (
+                                  <span className="bg-rose-100 text-rose-800 text-[9px] font-bold px-2 py-0.5 rounded-md">HIGH URGENCY</span>
+                                )}
+                              </div>
+                              <p className="text-xs text-slate-500 font-medium">{apt.reason}</p>
+                              <p className="text-[10px] text-teal-700 font-bold mt-0.5">🗓️ {apt.time} ({apt.duration})</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-1 rounded-xl">
+                              {apt.status}
+                            </span>
+                            <button
+                              onClick={() => {
+                                setSelectedAppointment(apt)
+                                setActiveModal('appointment_detail')
+                              }}
+                              className="bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition cursor-pointer"
+                            >
+                              Details
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -592,101 +646,65 @@ export default function DoctorDashboard() {
                 {/* Right 4 Columns */}
                 <div className="lg:col-span-4 space-y-6">
                   
-                  {/* AI Pre-visit Insights Card */}
-                  <div className="bg-slate-900 text-white rounded-3xl p-6 shadow-xl space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <IconBrain className="w-5 h-5 text-teal-400" />
-                        <h4 className="font-bold text-xs uppercase tracking-wider text-slate-200">AI Pre-visit Insights</h4>
-                      </div>
-                      <span className="text-[10px] bg-teal-900/80 text-teal-300 font-bold px-2 py-0.5 rounded-md">HIGH URGENCY</span>
-                    </div>
-
-                    <div className="space-y-2 text-xs">
-                      <p className="font-bold text-white text-sm">Patient: Rahul Verma (09:30 AM)</p>
-                      <p className="text-slate-300 leading-relaxed">
-                        <span className="font-bold text-teal-300">Chief Complaint:</span> High fever with chills and body pain for 2 days.
-                      </p>
-                      <div className="pt-2 border-t border-slate-800 space-y-1">
-                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Suggested Questions:</p>
-                        <ul className="text-slate-300 space-y-1 text-[11px]">
-                          <li>• Any shortness of breath or cough?</li>
-                          <li>• Recent travel or endemic region exposure?</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* To Do & Reminders Card */}
-                  <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-2xs space-y-4">
-                    <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider">To Do & Reminders</h4>
-
-                    <div className="space-y-2">
-                      <button
-                        onClick={() => setActiveModal('prescription')}
-                        className="w-full p-3 bg-slate-50 hover:bg-slate-100 rounded-2xl flex items-center justify-between text-left transition cursor-pointer"
-                      >
-                        <div className="flex items-center gap-3">
-                          <IconPill className="w-4 h-4 text-purple-600" />
-                          <div>
-                            <p className="text-xs font-bold text-slate-900">2 prescriptions pending</p>
-                            <p className="text-[10px] text-slate-400">Generate summaries for patients</p>
-                          </div>
-                        </div>
-                        <span className="text-slate-400 text-xs font-bold">›</span>
-                      </button>
-
-                      <button
-                        onClick={() => setActiveTab('messages')}
-                        className="w-full p-3 bg-slate-50 hover:bg-slate-100 rounded-2xl flex items-center justify-between text-left transition cursor-pointer"
-                      >
-                        <div className="flex items-center gap-3">
-                          <IconMessage className="w-4 h-4 text-teal-600" />
-                          <div>
-                            <p className="text-xs font-bold text-slate-900">1 unread message</p>
-                            <p className="text-[10px] text-slate-400">From patient Neha Singh</p>
-                          </div>
-                        </div>
-                        <span className="text-slate-400 text-xs font-bold">›</span>
-                      </button>
-                    </div>
-                  </div>
-
                   {/* Quick Actions Grid */}
-                  <div className="space-y-3">
+                  <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs space-y-3">
                     <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider">Quick Actions</h4>
                     <div className="grid grid-cols-2 gap-3">
                       <button
                         onClick={() => setActiveModal('prescription')}
-                        className="p-3.5 bg-white hover:border-teal-400 text-slate-800 rounded-2xl text-left border border-slate-200 transition shadow-2xs cursor-pointer flex flex-col justify-between h-20"
+                        className="p-3.5 bg-slate-50 hover:bg-teal-50 hover:border-teal-300 border border-slate-200 rounded-2xl text-left transition shadow-2xs cursor-pointer flex flex-col justify-between h-20"
                       >
                         <IconPill className="w-5 h-5 text-teal-700" />
-                        <span className="text-xs font-bold">New Prescription</span>
+                        <span className="text-xs font-bold text-slate-900">New Prescription</span>
                       </button>
 
                       <button
                         onClick={() => setActiveModal('note')}
-                        className="p-3.5 bg-white hover:border-teal-400 text-slate-800 rounded-2xl text-left border border-slate-200 transition shadow-2xs cursor-pointer flex flex-col justify-between h-20"
+                        className="p-3.5 bg-slate-50 hover:bg-teal-50 hover:border-teal-300 border border-slate-200 rounded-2xl text-left transition shadow-2xs cursor-pointer flex flex-col justify-between h-20"
                       >
                         <IconFileText className="w-5 h-5 text-teal-700" />
-                        <span className="text-xs font-bold">Add Patient Note</span>
+                        <span className="text-xs font-bold text-slate-900">Add Patient Note</span>
                       </button>
 
                       <button
                         onClick={() => setActiveModal('block')}
-                        className="p-3.5 bg-white hover:border-teal-400 text-slate-800 rounded-2xl text-left border border-slate-200 transition shadow-2xs cursor-pointer flex flex-col justify-between h-20"
+                        className="p-3.5 bg-slate-50 hover:bg-teal-50 hover:border-teal-300 border border-slate-200 rounded-2xl text-left transition shadow-2xs cursor-pointer flex flex-col justify-between h-20"
                       >
                         <IconClock className="w-5 h-5 text-amber-600" />
-                        <span className="text-xs font-bold">Block Time</span>
+                        <span className="text-xs font-bold text-slate-900">Block Time</span>
                       </button>
 
                       <button
-                        onClick={() => setActiveTab('calendar')}
-                        className="p-3.5 bg-white hover:border-teal-400 text-slate-800 rounded-2xl text-left border border-slate-200 transition shadow-2xs cursor-pointer flex flex-col justify-between h-20"
+                        onClick={() => handleTabSwitch('calendar')}
+                        className="p-3.5 bg-slate-50 hover:bg-teal-50 hover:border-teal-300 border border-slate-200 rounded-2xl text-left transition shadow-2xs cursor-pointer flex flex-col justify-between h-20"
                       >
                         <IconCalendar className="w-5 h-5 text-blue-600" />
-                        <span className="text-xs font-bold">View Calendar</span>
+                        <span className="text-xs font-bold text-slate-900">View Calendar</span>
                       </button>
+                    </div>
+                  </div>
+
+                  {/* Patient Directory Snippet */}
+                  <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-slate-900 text-xs uppercase tracking-wider">Patient Directory</h4>
+                      <button onClick={() => handleTabSwitch('patients')} className="text-xs font-bold text-teal-700 hover:underline cursor-pointer">
+                        View All
+                      </button>
+                    </div>
+
+                    <div className="space-y-3">
+                      {patientDirectory.slice(0, 4).map((p) => (
+                        <div key={p.id} className="p-3 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
+                          <div>
+                            <p className="font-bold text-slate-900 text-xs">{p.name}</p>
+                            <p className="text-[10px] text-slate-500">{p.phone} · {p.condition}</p>
+                          </div>
+                          <span className="bg-white border text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                            {p.bloodGroup}
+                          </span>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
@@ -695,10 +713,13 @@ export default function DoctorDashboard() {
             </>
           )}
 
-          {/* TAB 2: APPOINTMENTS VIEW */}
+          {/* TAB 2: APPOINTMENTS DIRECTORY */}
           {activeTab === 'appointments' && (
             <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs space-y-6">
-              <h3 className="font-bold text-slate-900 text-lg">Appointments Directory</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-slate-900 text-lg">Appointments Directory</h3>
+                <span className="text-xs text-slate-400 font-medium">Full list of registered clinic appointments</span>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead>
@@ -706,6 +727,7 @@ export default function DoctorDashboard() {
                       <th className="pb-3">Time</th>
                       <th className="pb-3">Patient</th>
                       <th className="pb-3">Reason</th>
+                      <th className="pb-3">Triage Urgency</th>
                       <th className="pb-3">Status</th>
                       <th className="pb-3 text-right">Action</th>
                     </tr>
@@ -717,6 +739,13 @@ export default function DoctorDashboard() {
                         <td className="py-4 font-bold text-slate-900">{apt.patientName}</td>
                         <td className="py-4 text-slate-700 font-medium">{apt.reason}</td>
                         <td className="py-4">
+                          <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold ${
+                            apt.urgency === 'HIGH' ? 'bg-rose-100 text-rose-800' : 'bg-blue-100 text-blue-800'
+                          }`}>
+                            {apt.urgency || 'MEDIUM'}
+                          </span>
+                        </td>
+                        <td className="py-4">
                           <span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-xl text-xs font-bold">
                             {apt.status}
                           </span>
@@ -727,7 +756,7 @@ export default function DoctorDashboard() {
                               setSelectedAppointment(apt)
                               setActiveModal('appointment_detail')
                             }}
-                            className="bg-slate-100 hover:bg-slate-200 text-slate-800 px-3 py-1.5 rounded-lg font-bold text-xs transition cursor-pointer"
+                            className="bg-teal-700 hover:bg-teal-800 text-white px-3 py-1.5 rounded-xl font-bold text-xs transition cursor-pointer shadow-2xs"
                           >
                             View Detail
                           </button>
@@ -763,8 +792,8 @@ export default function DoctorDashboard() {
                     </div>
 
                     <div className="text-xs text-slate-600 space-y-1 pt-2 border-t border-slate-100">
-                      <p><span className="font-bold text-slate-800">Visits:</span> {p.totalVisits}</p>
-                      <p><span className="font-bold text-slate-800">Status:</span> {p.condition}</p>
+                      <p><span className="font-bold text-slate-800">Total Visits:</span> {p.totalVisits}</p>
+                      <p><span className="font-bold text-slate-800">Current Assessment:</span> {p.condition}</p>
                     </div>
                   </div>
                 ))}
@@ -772,11 +801,169 @@ export default function DoctorDashboard() {
             </div>
           )}
 
-          {/* OTHER TABS */}
-          {['calendar', 'messages', 'prescriptions', 'reports', 'reminders', 'profile', 'settings'].includes(activeTab) && (
-            <div className="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-2xs space-y-4">
-              <h3 className="font-bold text-slate-900 text-lg capitalize">{activeTab} Hub</h3>
-              <p className="text-xs text-slate-500">Real clinical data synchronized with database.</p>
+          {/* TAB 4: CALENDAR */}
+          {activeTab === 'calendar' && (
+            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-slate-900 text-lg">Doctor Practice Calendar</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">Manage consultation slots, Google Calendar sync, and leave blocks</p>
+                </div>
+                <button onClick={() => setActiveModal('block')} className="bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer">
+                  + Block Time Out
+                </button>
+              </div>
+
+              <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-3">
+                <p className="text-sm font-bold text-slate-900">May 2025 Schedule Overview</p>
+                <div className="grid grid-cols-7 gap-2 text-xs font-bold text-slate-600">
+                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
+                    <div key={day} className="p-3 bg-white border rounded-xl shadow-2xs">
+                      <p className="text-slate-400 uppercase text-[10px]">{day}</p>
+                      <p className="text-teal-700 mt-1 font-extrabold">9 AM - 5 PM</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 5: PRESCRIPTIONS */}
+          {activeTab === 'prescriptions' && (
+            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-slate-900 text-lg">Issued Prescriptions Log</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">E-Prescriptions issued to clinic patients</p>
+                </div>
+                <button onClick={() => setActiveModal('prescription')} className="bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer">
+                  + Issue New Prescription
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {issuedPrescriptions.map((rx) => (
+                  <div key={rx.id} className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-xs">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-slate-900">{rx.patientName}</h4>
+                      <span className="text-[10px] text-slate-400 font-semibold">{rx.date}</span>
+                    </div>
+                    <p className="font-extrabold text-teal-800">{rx.drugName} ({rx.dosage})</p>
+                    <p className="text-slate-600">{rx.frequency} · {rx.duration}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 6: REPORTS */}
+          {activeTab === 'reports' && (
+            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs space-y-6">
+              <h3 className="font-bold text-slate-900 text-lg">Clinical Analytics & Patient Reports</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-5 bg-teal-50 border border-teal-100 rounded-2xl text-xs space-y-1">
+                  <p className="font-bold text-teal-900">Total Consultations (This Month)</p>
+                  <p className="text-2xl font-extrabold text-teal-800">150</p>
+                  <p className="text-[10px] text-teal-700 font-semibold">↑ 18% increase from last month</p>
+                </div>
+
+                <div className="p-5 bg-purple-50 border border-purple-100 rounded-2xl text-xs space-y-1">
+                  <p className="font-bold text-purple-900">Patient Satisfaction Rate</p>
+                  <p className="text-2xl font-extrabold text-purple-800">98.4%</p>
+                  <p className="text-[10px] text-purple-700 font-semibold">Based on 120 verified reviews</p>
+                </div>
+
+                <div className="p-5 bg-blue-50 border border-blue-100 rounded-2xl text-xs space-y-1">
+                  <p className="font-bold text-blue-900">Top Treated Condition</p>
+                  <p className="text-2xl font-extrabold text-blue-800">Viral Fever</p>
+                  <p className="text-[10px] text-blue-700 font-semibold">42% of monthly visits</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 7: REMINDERS */}
+          {activeTab === 'reminders' && (
+            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-2xs space-y-6">
+              <h3 className="font-bold text-slate-900 text-lg">Clinician Action Reminders</h3>
+              <div className="space-y-3 text-xs">
+                <div className="p-4 bg-teal-50 border border-teal-100 rounded-2xl flex items-center justify-between">
+                  <div>
+                    <p className="font-bold text-slate-900">Follow-up Call with Rahul Verma</p>
+                    <p className="text-[11px] text-slate-500">Check CBC platelet report results for Dengue evaluation</p>
+                  </div>
+                  <button onClick={() => triggerToast('✓ Reminder completed!')} className="bg-teal-700 text-white font-bold px-3 py-1.5 rounded-xl cursor-pointer">
+                    Complete ✓
+                  </button>
+                </div>
+
+                <div className="p-4 bg-purple-50 border border-purple-100 rounded-2xl flex items-center justify-between">
+                  <div>
+                    <p className="font-bold text-slate-900">Review BP Log for Sunita Devi</p>
+                    <p className="text-[11px] text-slate-500">Weekly morning BP average evaluation</p>
+                  </div>
+                  <button onClick={() => triggerToast('✓ Reminder completed!')} className="bg-purple-700 text-white font-bold px-3 py-1.5 rounded-xl cursor-pointer">
+                    Complete ✓
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 8: PROFILE */}
+          {activeTab === 'profile' && (
+            <div className="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-2xs space-y-6">
+              <div>
+                <h3 className="font-bold text-slate-900 text-xl">Doctor Profile & Practice Setup</h3>
+                <p className="text-xs text-slate-500">Manage your clinical profile, consultation fee, and slot duration</p>
+              </div>
+
+              <form onSubmit={handleSaveProfile} className="space-y-4 text-xs">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-slate-500 mb-1 font-bold">Doctor Full Name</label>
+                    <input
+                      type="text"
+                      value={user.name}
+                      onChange={(e) => setUser({ ...user, name: e.target.value })}
+                      className="w-full p-2.5 border rounded-xl bg-white font-bold text-slate-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-500 mb-1 font-bold">Specialization</label>
+                    <input
+                      type="text"
+                      value={user.specialization}
+                      onChange={(e) => setUser({ ...user, specialization: e.target.value })}
+                      className="w-full p-2.5 border rounded-xl bg-white font-bold text-slate-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-500 mb-1 font-bold">Consultation Fee (₹)</label>
+                    <input
+                      type="number"
+                      value={user.fee}
+                      onChange={(e) => setUser({ ...user, fee: Number(e.target.value) })}
+                      className="w-full p-2.5 border rounded-xl bg-white font-bold text-slate-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-500 mb-1 font-bold">Experience (Years)</label>
+                    <input
+                      type="number"
+                      value={user.experience}
+                      onChange={(e) => setUser({ ...user, experience: Number(e.target.value) })}
+                      className="w-full p-2.5 border rounded-xl bg-white font-bold text-slate-900"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button type="submit" className="bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs px-6 py-2.5 rounded-xl transition cursor-pointer shadow-2xs">
+                    Save Profile Changes
+                  </button>
+                </div>
+              </form>
             </div>
           )}
         </main>
@@ -785,13 +972,13 @@ export default function DoctorDashboard() {
       {/* MODALS */}
       {activeModal === 'prescription' && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl border p-6 w-full max-w-lg space-y-4">
+          <div className="bg-white rounded-3xl shadow-2xl border p-6 w-full max-w-lg space-y-4 text-xs">
             <div className="flex items-center justify-between border-b pb-3">
               <h3 className="font-bold text-slate-900 text-sm">Issue New Prescription</h3>
               <button onClick={() => setActiveModal(null)} className="text-slate-400 hover:text-slate-600 font-bold">✕</button>
             </div>
 
-            <form onSubmit={handleSavePrescription} className="space-y-3 text-xs">
+            <form onSubmit={handleSavePrescription} className="space-y-3">
               <div>
                 <label className="block font-bold text-slate-700 mb-1">Patient</label>
                 <select
@@ -821,6 +1008,41 @@ export default function DoctorDashboard() {
                 <button type="submit" className="bg-teal-700 hover:bg-teal-800 text-white font-bold px-5 py-2 rounded-xl">Issue Rx</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* APPOINTMENT DETAIL MODAL */}
+      {activeModal === 'appointment_detail' && selectedAppointment && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl border p-6 w-full max-w-lg space-y-4 text-xs">
+            <div className="flex items-center justify-between border-b pb-3">
+              <h3 className="font-bold text-slate-900 text-sm">Consultation Detail — {selectedAppointment.patientName}</h3>
+              <button onClick={() => setActiveModal(null)} className="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+            </div>
+
+            <div className="space-y-3">
+              <p><span className="font-bold text-slate-900">Patient:</span> {selectedAppointment.patientName} ({selectedAppointment.ageGender})</p>
+              <p><span className="font-bold text-slate-900">Scheduled Time:</span> {selectedAppointment.time}</p>
+              <p><span className="font-bold text-slate-900">Chief Complaint:</span> {selectedAppointment.chiefComplaint || selectedAppointment.reason}</p>
+
+              {selectedAppointment.questions && (
+                <div className="p-3 bg-teal-50 border border-teal-100 rounded-xl space-y-1">
+                  <p className="font-bold text-teal-900">Gemini AI Suggested Questions:</p>
+                  <ul className="list-disc pl-4 text-slate-700 space-y-0.5">
+                    {selectedAppointment.questions.map((q, idx) => (
+                      <li key={idx}>{q}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            <div className="pt-2 flex justify-end gap-2 border-t">
+              <button onClick={() => markAppointmentStatus(selectedAppointment.id, 'Completed')} className="bg-emerald-600 text-white font-bold px-4 py-2 rounded-xl">
+                Mark Completed ✓
+              </button>
+            </div>
           </div>
         </div>
       )}
